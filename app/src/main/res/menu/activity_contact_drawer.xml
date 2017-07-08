@@ -24,13 +24,21 @@
     <item android:title="작업">
         <menu android:id="@+id/contactTaskMenu">
             <item
+                android:id="@+id/nav_syncFacebook"
+                android:icon="@drawable/ic_menu_share"
+                android:title="Facebook 동기화" />
+            <item
+                android:id="@+id/nav_syncPhone"
+                android:icon="@drawable/ic_menu_share"
+                android:title="핸드폰 동기화" />
+            <item
+                android:id="@+id/nav_syncCustom"
+                android:icon="@drawable/ic_menu_share"
+                android:title="커스텀 연락처 동기화" />
+            <item
                 android:id="@+id/nav_addContact"
                 android:icon="@drawable/ic_person_add_black_24dp"
                 android:title="커스텀 연락처 추가" />
-            <item
-                android:id="@+id/nav_sync"
-                android:icon="@drawable/ic_menu_share"
-                android:title="Facebook 동기화" />
             <item
                 android:id="@+id/nav_login"
                 android:icon="@drawable/ic_menu_send"

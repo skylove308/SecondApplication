@@ -3,6 +3,8 @@ package com.example.secondapplication;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
+import android.graphics.drawable.ShapeDrawable;
+import android.graphics.drawable.shapes.OvalShape;
 import android.os.AsyncTask;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
@@ -32,6 +34,19 @@ public class ContactAdapter extends BaseAdapter{
     private ArrayList<ContactInfo> customList = new ArrayList<ContactInfo>();
 
     private int imgMetric;
+    private int showMode = 0;
+    // 0: all, 1:facebook, 2:phone, 3:custom
+
+    public ArrayList<ContactInfo> getContactList(){return contactList;}
+    public ArrayList<ContactInfo> getFacebookList(){return facebookList;}
+    public ArrayList<ContactInfo> getPhoneList(){return phoneList;}
+    public ArrayList<ContactInfo> getCustomList(){return customList;}
+    public int getShowMode(){return showMode;}
+
+    public void setContactList(ArrayList<ContactInfo> list){contactList = list;}
+    public void setFacebookList(ArrayList<ContactInfo> list){facebookList = list;}
+    public void setPhoneList(ArrayList<ContactInfo> list){phoneList = list;}
+    public void setCustomList(ArrayList<ContactInfo> list){customList = list;}
 
     Comparator<ContactInfo> cmpAsc = new Comparator<ContactInfo>() {
         @Override
@@ -56,28 +71,69 @@ public class ContactAdapter extends BaseAdapter{
         return contactList.get(position);
     }
 
-    public void addItem(String name, String email, String phone, String picUrl){
-        ContactInfo newContact = new ContactInfo(name, email, phone, picUrl);
-        contactList.add(newContact);
-    }
-    public void deleteAll(){
+    public void changeShowMode(int newMode){
         contactList.clear();
+        this.notifyDataSetChanged();
+        showMode = newMode;
+        if(showMode == 0 || showMode == 1){
+            for(int i=0;i<facebookList.size();i++){
+                contactList.add(facebookList.get(i));
+                this.notifyDataSetChanged();
+            }
+        }
+        if(showMode == 0 || showMode == 2){
+            for(int i=0;i<phoneList.size();i++){
+                contactList.add(phoneList.get(i));
+                this.notifyDataSetChanged();
+            }
+        }
+        if(showMode == 0 || showMode == 3){
+            for(int i=0;i<customList.size();i++){
+                contactList.add(customList.get(i));
+                this.notifyDataSetChanged();
+            }
+        }
+        sortItem();
+        this.notifyDataSetChanged();
+    }
+    public void addItem(int mode, String name, String email, String phone, String picUrl){
+        ContactInfo newContact = new ContactInfo(name, email, phone, picUrl);
+        if(mode == 1) facebookList.add(newContact);
+        if(mode == 2) phoneList.add(newContact);
+        if(mode == 3) customList.add(newContact);
+        if(showMode == mode || showMode == 0){
+            contactList.add(newContact);
+            this.notifyDataSetChanged();
+            sortItem();
+        }
+    }
+    public void deleteAll(int mode){
+        if(mode == 1) facebookList.clear();
+        if(mode == 2) phoneList.clear();
+        if(mode == 3) customList.clear();
+        changeShowMode(showMode);
     }
     public void sortItem() {
         Collections.sort(contactList, cmpAsc);
+        this.notifyDataSetChanged();
     }
 
     private void showItem(ImageView imageView, TextView textView, ContactInfo nowInfo){
+        int[] chooseColor = {R.drawable.ic_account_circle_black_24dp, R.drawable.ic_account_circle_green_24dp, R.drawable.ic_account_circle_orange_24dp};
         textView.setText(nowInfo.getName());
         imageView.setLayoutParams(new LinearLayout.LayoutParams((imgMetric * 14 / 10), (imgMetric * 11 / 10)));
         imageView.setScaleType(ImageView.ScaleType.FIT_XY);
         imageView.setPadding(10 + (imgMetric * 3 / 10), 10, 10, 10);
         Bitmap userBitmap = nowInfo.getThumb();
-        if(userBitmap == null) {
+        if(userBitmap == null && nowInfo.getPicUrl().compareTo("") != 0) {
             imgDownloadTask downTask = new imgDownloadTask(imageView, nowInfo);
             downTask.execute(nowInfo.getPicUrl());
         }else{
-            imageView.setImageBitmap(userBitmap);
+            if(userBitmap != null){
+                imageView.setImageBitmap(userBitmap);
+            }else{
+                imageView.setImageResource(chooseColor[Math.abs((nowInfo.getName()+nowInfo.getPhone()).hashCode())%3]);
+            }
         }
     }
     @Override
