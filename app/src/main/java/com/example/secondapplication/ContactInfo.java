@@ -15,9 +15,10 @@ public class ContactInfo implements Parcelable{
     private String picUrl;
     private Bitmap picThumb;
     private int mode;
+    private String uniqueId;
 
-    ContactInfo(int _mode, String _name, String _email, String _phone, String _picUrl){
-        mode = _mode; name = _name; phone = _phone; email = _email; picUrl = _picUrl; picThumb = null;
+    ContactInfo(int _mode, String _name, String _email, String _phone, String _picUrl, String _uniqueId){
+        mode = _mode; name = _name; phone = _phone; email = _email; picUrl = _picUrl; picThumb = null; uniqueId = _uniqueId;
     }
 
     public int getMode(){ return mode; }
@@ -25,6 +26,7 @@ public class ContactInfo implements Parcelable{
     public String getPhone(){ return phone; }
     public String getEmail(){ return email; }
     public String getPicUrl(){ return picUrl; }
+    public String getUniqueId(){ return uniqueId; }
 
     public Bitmap getThumb(){ return picThumb; }
     public void setThumb(Bitmap bm){
@@ -42,6 +44,7 @@ public class ContactInfo implements Parcelable{
         parcel.writeString(phone);
         parcel.writeString(email);
         parcel.writeString(picUrl);
+        parcel.writeString(uniqueId);
         //parcel.writeParcelable(picThumb, flags);
     }
     public static final Parcelable.Creator<ContactInfo> CREATOR = new Creator<ContactInfo>() {
@@ -52,7 +55,8 @@ public class ContactInfo implements Parcelable{
             String _phone = source.readString();
             String _email = source.readString();
             String _picUrl = source.readString();
-            ContactInfo cInfo = new ContactInfo(_mode, _name, _phone, _email, _picUrl);
+            String _uniqueId = source.readString();
+            ContactInfo cInfo = new ContactInfo(_mode, _name, _phone, _email, _picUrl, _uniqueId);
             //cInfo.picThumb = source.readParcelable(Bitmap.class.getClassLoader());
             return cInfo;
         }

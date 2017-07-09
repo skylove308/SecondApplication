@@ -73,8 +73,8 @@ public class ContactActivity extends AppCompatActivity
     private boolean firstChangeMode = true;
     private String userId;
 
-    void addItem(int mode, String name, String email, String phone, String picUrl){
-        adapter.addItem(mode, name, email, phone, picUrl);
+    void addItem(int mode, String name, String email, String phone, String picUrl, String uniqueId){
+        adapter.addItem(mode, name, email, phone, picUrl, uniqueId);
         changeShowMode(adapter.getShowMode());
     }
     void changeShowMode(int newMode){
@@ -399,7 +399,7 @@ public class ContactActivity extends AppCompatActivity
                             JSONObject fObject = fList.getJSONObject(i);
                             String fName = fObject.getString("name");
                             String fUrl = fObject.getJSONObject("picture").getJSONObject("data").getString("url");
-                            addItem(1, fName, "", "", fUrl);
+                            addItem(1, fName, "", "", fUrl, "");
                         }
                         adapter.sortItem();
                             /**/
@@ -430,7 +430,7 @@ public class ContactActivity extends AppCompatActivity
             do{
                 String number = cursor.getString(1).replaceAll("-","");
                 String name = cursor.getString(2);
-                addItem(2, name, "", number, "");
+                addItem(2, name, "", number, "", "");
             }while(cursor.moveToNext());
         }
     }
@@ -503,7 +503,8 @@ public class ContactActivity extends AppCompatActivity
                     String newEmail = data.getExtras().getString("Email");
                     String newName = data.getExtras().getString("Name");
                     String newPic = data.getExtras().getString("Pic");
-                    addItem(3, newName, newEmail, newPhone, newPic);
+                    String uniqueId = data.getExtras().getString("uniqueId");
+                    addItem(3, newName, newEmail, newPhone, newPic, uniqueId);
                 } catch (Exception e) {
                 }
             }

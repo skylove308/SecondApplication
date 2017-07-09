@@ -33,6 +33,8 @@ import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import org.json.JSONObject;
+
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.IOException;
@@ -225,12 +227,19 @@ public class ContactAddActivity extends AppCompatActivity {
             Bundle bun = msg.getData();
             String result = bun.getString("RESPONSE");
             System.out.println(result);
-            Intent intent = new Intent();
-            intent.putExtra("Name", bun.getString("Name"));
-            intent.putExtra("Phone", bun.getString("Phone"));
-            intent.putExtra("Email", bun.getString("Email"));
-            intent.putExtra("Pic", bun.getString("Pic"));
-            setResult(RESULT_OK, intent);
+            try {
+                JSONObject resJson = new JSONObject(result);
+                String uniqueId = resJson.getString("id");
+                Intent intent = new Intent();
+                intent.putExtra("Name", bun.getString("Name"));
+                intent.putExtra("Phone", bun.getString("Phone"));
+                intent.putExtra("Email", bun.getString("Email"));
+                intent.putExtra("Pic", bun.getString("Pic"));
+                intent.putExtra("uniqueId", uniqueId);
+                setResult(RESULT_OK, intent);
+            }catch(Exception e){
+                e.printStackTrace();
+            }
             //Toast.makeText(ContactAddActivity.this, "SUCCESS!", Toast.LENGTH_SHORT);
             finish();
         }

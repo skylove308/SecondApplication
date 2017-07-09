@@ -97,8 +97,8 @@ public class ContactAdapter extends BaseAdapter{
         sortItem();
         this.notifyDataSetChanged();
     }
-    public void addItem(int mode, String name, String email, String phone, String picUrl){
-        ContactInfo newContact = new ContactInfo(mode, name, email, phone, picUrl);
+    public void addItem(int mode, String name, String email, String phone, String picUrl, String uniqueId){
+        ContactInfo newContact = new ContactInfo(mode, name, email, phone, picUrl, uniqueId);
         if(mode == 1) facebookList.add(newContact);
         if(mode == 2) phoneList.add(newContact);
         if(mode == 3) customList.add(newContact);
