@@ -5,9 +5,17 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     tools:context="com.example.secondapplication.ContactAddActivity">
+    <Button
+        android:id="@+id/addContactButton"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:text="Save"
+        />
     <ScrollView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
+        android:layout_height="match_parent"
+        android:layout_above="@+id/addContactButton">
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="match_parent"
@@ -35,7 +43,7 @@
                     android:layout_height="wrap_content"
                     android:layout_toRightOf="@+id/textAddName"
                     android:textSize="20sp"
-                    android:text="Jihoon Ko"
+                    android:text=""
                     android:layout_marginLeft="15dp"/>
             </RelativeLayout>
             <RelativeLayout
@@ -63,7 +71,7 @@
                     android:layout_toRightOf="@+id/textAddPhone"
                     android:textSize="20sp"
                     android:inputType="phone"
-                    android:text="01025569631"
+                    android:text=""
                     android:layout_marginLeft="15dp"/>
             </RelativeLayout>
             <RelativeLayout
@@ -90,7 +98,7 @@
                     android:layout_toRightOf="@+id/textAddEmail"
                     android:textSize="20sp"
                     android:inputType="textEmailAddress"
-                    android:text="jihoonko@kaist.ac.kr"
+                    android:text=""
                     android:layout_marginLeft="15dp"/>
             </RelativeLayout>
             <RelativeLayout
@@ -114,17 +122,10 @@
                     android:id="@+id/addContactImage"
                     android:layout_marginLeft="15dp"
                     android:layout_toRightOf="@+id/textAddPic"
-                    android:layout_width="200px"
-                    android:layout_height="200px"
-                    android:src="@drawable/ic_account_circle_black_24dp"/>
+                    android:layout_width="150dp"
+                    android:layout_height="150dp"
+                    android:src="@drawable/ic_account_circle_gray_24dp"/>
             </RelativeLayout>
         </LinearLayout>
     </ScrollView>
-    <Button
-        android:id="@+id/addContactButton"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:text="Save"
-        />
 </RelativeLayout>

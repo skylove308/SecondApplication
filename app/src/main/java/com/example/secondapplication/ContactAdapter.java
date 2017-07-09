@@ -6,6 +6,7 @@ import android.graphics.BitmapFactory;
 import android.graphics.drawable.ShapeDrawable;
 import android.graphics.drawable.shapes.OvalShape;
 import android.os.AsyncTask;
+import android.util.Base64;
 import android.util.TypedValue;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -97,7 +98,7 @@ public class ContactAdapter extends BaseAdapter{
         this.notifyDataSetChanged();
     }
     public void addItem(int mode, String name, String email, String phone, String picUrl){
-        ContactInfo newContact = new ContactInfo(name, email, phone, picUrl);
+        ContactInfo newContact = new ContactInfo(mode, name, email, phone, picUrl);
         if(mode == 1) facebookList.add(newContact);
         if(mode == 2) phoneList.add(newContact);
         if(mode == 3) customList.add(newContact);
@@ -119,20 +120,30 @@ public class ContactAdapter extends BaseAdapter{
     }
 
     private void showItem(ImageView imageView, TextView textView, ContactInfo nowInfo){
-        int[] chooseColor = {R.drawable.ic_account_circle_black_24dp, R.drawable.ic_account_circle_green_24dp, R.drawable.ic_account_circle_orange_24dp};
+        int[] chooseColor = {R.drawable.ic_account_circle_gray_24dp, R.drawable.ic_account_circle_green_24dp, R.drawable.ic_account_circle_orange_24dp};
         textView.setText(nowInfo.getName());
         imageView.setLayoutParams(new LinearLayout.LayoutParams((imgMetric * 14 / 10), (imgMetric * 11 / 10)));
         imageView.setScaleType(ImageView.ScaleType.FIT_XY);
         imageView.setPadding(10 + (imgMetric * 3 / 10), 10, 10, 10);
         Bitmap userBitmap = nowInfo.getThumb();
-        if(userBitmap == null && nowInfo.getPicUrl().compareTo("") != 0) {
-            imgDownloadTask downTask = new imgDownloadTask(imageView, nowInfo);
-            downTask.execute(nowInfo.getPicUrl());
-        }else{
-            if(userBitmap != null){
-                imageView.setImageBitmap(userBitmap);
+        if(nowInfo.getMode() == 3) {
+            String userStr = nowInfo.getPicUrl();
+            if(userStr.length() == 0){
+                imageView.setImageResource(chooseColor[Math.abs((nowInfo.getName() + nowInfo.getPhone()).hashCode()) % chooseColor.length]);
             }else{
-                imageView.setImageResource(chooseColor[Math.abs((nowInfo.getName()+nowInfo.getPhone()).hashCode())%3]);
+                imgDownloadTask downTask = new imgDownloadTask(imageView, nowInfo);
+                downTask.execute(userStr);
+            }
+        }else {
+            if (userBitmap == null && nowInfo.getPicUrl().compareTo("") != 0) {
+                imgDownloadTask downTask = new imgDownloadTask(imageView, nowInfo);
+                downTask.execute(nowInfo.getPicUrl());
+            } else {
+                if (userBitmap != null) {
+                    imageView.setImageBitmap(userBitmap);
+                } else {
+                    imageView.setImageResource(chooseColor[Math.abs((nowInfo.getName() + nowInfo.getPhone()).hashCode()) % chooseColor.length]);
+                }
             }
         }
     }
@@ -161,25 +172,32 @@ public class ContactAdapter extends BaseAdapter{
             super.onPreExecute();
         }
         private Bitmap downloadUrl(String imgUrl) throws IOException {
-            System.out.println("trying to GET " + imgUrl);
-            Bitmap bitmap = null;
-            InputStream iStream = null;
-            HttpURLConnection urlConnection = null;
-            try {
-                URL url = new URL(imgUrl);
-                urlConnection = (HttpURLConnection) url.openConnection();
-                urlConnection.connect();
-                iStream = urlConnection.getInputStream();
-                bitmap = BitmapFactory.decodeStream(iStream);
-            } catch (Exception e) {
-                e.printStackTrace();
-            } finally {
-                iStream.close();
-                urlConnection.disconnect();
-                System.out.println("GET 200 OK / " + imgUrl);
+            if(nowInfo.getMode() == 3){
+                byte[] decodedByte = Base64.decode(imgUrl, 0);
+                Bitmap bitmap = BitmapFactory.decodeByteArray(decodedByte, 0, decodedByte.length);
+                nowInfo.setThumb(bitmap);
+                return bitmap;
+            }else {
+                System.out.println("trying to GET " + imgUrl);
+                Bitmap bitmap = null;
+                InputStream iStream = null;
+                HttpURLConnection urlConnection = null;
+                try {
+                    URL url = new URL(imgUrl);
+                    urlConnection = (HttpURLConnection) url.openConnection();
+                    urlConnection.connect();
+                    iStream = urlConnection.getInputStream();
+                    bitmap = BitmapFactory.decodeStream(iStream);
+                } catch (Exception e) {
+                    e.printStackTrace();
+                } finally {
+                    iStream.close();
+                    urlConnection.disconnect();
+                    System.out.println("GET 200 OK / " + imgUrl);
+                }
+                nowInfo.setThumb(bitmap);
+                return bitmap;
             }
-            nowInfo.setThumb(bitmap);
-            return bitmap;
         }
 
         @Override

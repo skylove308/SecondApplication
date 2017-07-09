@@ -1,7 +1,9 @@
 package com.example.secondapplication;
 
 import android.Manifest;
+import android.app.Dialog;
 import android.content.ContentResolver;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.database.Cursor;
@@ -24,7 +26,9 @@ import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.AdapterView;
 import android.widget.BaseAdapter;
+import android.widget.Button;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -98,12 +102,12 @@ public class ContactActivity extends AppCompatActivity
         navMenu.findItem(R.id.nav_login).setVisible(!isNowLogin);
         navMenu.findItem(R.id.nav_logout).setVisible(isNowLogin);
         navMenu.findItem(R.id.nav_addContact).setVisible(isNowLogin);
-        navMenu.findItem(R.id.nav_syncFacebook).setVisible(isNowLogin);
-        navMenu.findItem(R.id.nav_syncPhone).setVisible(isNowLogin);
+        navMenu.findItem(R.id.nav_syncFacebook).setVisible(false);
+        navMenu.findItem(R.id.nav_syncPhone).setVisible(false);
         navMenu.findItem(R.id.nav_showFacebook).setVisible(isNowLogin);
         if(!isNowLogin){
             navMenu.findItem(R.id.nav_showCustom).setVisible(isNowLogin);
-            navMenu.findItem(R.id.nav_syncCustom).setVisible(isNowLogin);
+            navMenu.findItem(R.id.nav_syncCustom).setVisible(false);
         }
         try {
             final boolean canApply = (imageView != null && tvName != null && tvEmail != null);
@@ -133,7 +137,7 @@ public class ContactActivity extends AppCompatActivity
                 }else{
                     new GraphRequest(
                             AccessToken.getCurrentAccessToken(),
-                            "/me?fields=id,name,picture,email",
+                            "/me?fields=id,name,picture.type(large),email&locale=ko_KR",
                             null,
                             HttpMethod.GET,
                             new GraphRequest.Callback() {
@@ -202,7 +206,7 @@ public class ContactActivity extends AppCompatActivity
                                         userEmail = myEmail;
                                         userId = myId;
                                         navMenu.findItem(R.id.nav_showCustom).setVisible(true);
-                                        navMenu.findItem(R.id.nav_syncCustom).setVisible(true);
+                                        navMenu.findItem(R.id.nav_syncCustom).setVisible(false);
                                         if (canApply) {
                                             TextView tvName = (TextView) findViewById(R.id.userName);
                                             tvName.setText(myName);
@@ -299,6 +303,13 @@ public class ContactActivity extends AppCompatActivity
         listView.setAdapter(adapter);
         listView.invalidateViews();
         listView.postInvalidate();
+        listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
+            @Override
+            public void onItemClick(AdapterView<?> adView, View view, int pos, long longId){
+                ContactViewDialog showDialog = new ContactViewDialog(ContactActivity.this, (ContactInfo) adapter.getItem(pos));
+                showDialog.show();
+            }
+        });
         /*
         adapter.addItem("Jihoon Ko", "jihoonko@kaist.ac.kr", "01025569631",
                 "https://scontent.xx.fbcdn.net/v/t1.0-1/p50x50/12227170_906747612747392_849221077459147265_n.jpg?oh=a76984fe10c8e05746e112643ad95c86&oe=59C63D5A");
@@ -402,7 +413,7 @@ public class ContactActivity extends AppCompatActivity
                     }
                 }
             };
-            new GraphRequest(AccessToken.getCurrentAccessToken(), "me/taggable_friends", null, HttpMethod.GET, graphCallBack).executeAsync();
+            new GraphRequest(AccessToken.getCurrentAccessToken(), "me/taggable_friends?fields=name,picture&locale=ko_KR", null, HttpMethod.GET, graphCallBack).executeAsync();
         }
     }
     public void syncContact(){
@@ -441,7 +452,7 @@ public class ContactActivity extends AppCompatActivity
             Intent intent = new Intent(ContactActivity.this, ContactAddActivity.class);
             System.out.println(userId);
             intent.putExtra("userId", userId);
-            startActivity(intent);
+            startActivityForResult(intent, 808);
         } else if (id == R.id.nav_syncFacebook) {
             syncFacebook();
         } else if(id == R.id.nav_syncPhone){
@@ -485,6 +496,19 @@ public class ContactActivity extends AppCompatActivity
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
-        callbackManager.onActivityResult(requestCode, resultCode, data);
+        if(requestCode == 808){
+            if(resultCode == RESULT_OK) {
+                try {
+                    String newPhone = data.getExtras().getString("Phone");
+                    String newEmail = data.getExtras().getString("Email");
+                    String newName = data.getExtras().getString("Name");
+                    String newPic = data.getExtras().getString("Pic");
+                    addItem(3, newName, newEmail, newPhone, newPic);
+                } catch (Exception e) {
+                }
+            }
+        }else {
+            callbackManager.onActivityResult(requestCode, resultCode, data);
+        }
     }
 }

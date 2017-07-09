@@ -14,11 +14,13 @@ public class ContactInfo implements Parcelable{
     private String email;
     private String picUrl;
     private Bitmap picThumb;
+    private int mode;
 
-    ContactInfo(String _name, String _phone, String _email, String _picUrl){
-        name = _name; phone = _phone; email = _email; picUrl = _picUrl; picThumb = null;
+    ContactInfo(int _mode, String _name, String _email, String _phone, String _picUrl){
+        mode = _mode; name = _name; phone = _phone; email = _email; picUrl = _picUrl; picThumb = null;
     }
 
+    public int getMode(){ return mode; }
     public String getName(){ return name; }
     public String getPhone(){ return phone; }
     public String getEmail(){ return email; }
@@ -35,6 +37,7 @@ public class ContactInfo implements Parcelable{
     }
     @Override
     public void writeToParcel(Parcel parcel, int flags){
+        parcel.writeInt(mode);
         parcel.writeString(name);
         parcel.writeString(phone);
         parcel.writeString(email);
@@ -44,11 +47,12 @@ public class ContactInfo implements Parcelable{
     public static final Parcelable.Creator<ContactInfo> CREATOR = new Creator<ContactInfo>() {
         @Override
         public ContactInfo createFromParcel(Parcel source) {
+            int _mode = source.readInt();
             String _name = source.readString();
             String _phone = source.readString();
             String _email = source.readString();
             String _picUrl = source.readString();
-            ContactInfo cInfo = new ContactInfo(_name, _phone, _email, _picUrl);
+            ContactInfo cInfo = new ContactInfo(_mode, _name, _phone, _email, _picUrl);
             //cInfo.picThumb = source.readParcelable(Bitmap.class.getClassLoader());
             return cInfo;
         }
