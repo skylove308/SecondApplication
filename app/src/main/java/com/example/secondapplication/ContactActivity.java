@@ -56,6 +56,12 @@ import java.net.URL;
 import java.util.ArrayList;
 import java.util.Arrays;
 
+import okhttp3.HttpUrl;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 public class ContactActivity extends AppCompatActivity
         implements NavigationView.OnNavigationItemSelectedListener {
 
@@ -216,6 +222,7 @@ public class ContactActivity extends AppCompatActivity
                                         imgDownloadTask downTask = new imgDownloadTask();
                                         downTask.execute(myPictureUrl);
                                         changeShowMode(0);
+                                        syncCustom();
                                         syncFacebook();
                                     } catch (Exception e) {
                                         e.printStackTrace();
@@ -306,8 +313,32 @@ public class ContactActivity extends AppCompatActivity
         listView.setOnItemClickListener(new AdapterView.OnItemClickListener(){
             @Override
             public void onItemClick(AdapterView<?> adView, View view, int pos, long longId){
-                ContactViewDialog showDialog = new ContactViewDialog(ContactActivity.this, (ContactInfo) adapter.getItem(pos));
+                final ContactInfo targetInfo = (ContactInfo) adapter.getItem(pos);
+                final ContactViewDialog showDialog = new ContactViewDialog(ContactActivity.this, targetInfo);
+                View.OnClickListener mEditListener = new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v){
+                        Intent intent = new Intent(ContactActivity.this, ContactAddActivity.class);
+                        intent.putExtra("userId", userId);
+                        intent.putExtra("uniqueId", targetInfo.getUniqueId());
+                        intent.putExtra("name", targetInfo.getName());
+                        intent.putExtra("phone", targetInfo.getPhone());
+                        intent.putExtra("email", targetInfo.getEmail());
+                        intent.putExtra("pic", targetInfo.getThumb());
+                        startActivityForResult(intent, 809);
+                        showDialog.dismiss();
+                    }
+                };
+                View.OnClickListener mDeleteListener = new View.OnClickListener(){
+                    @Override
+                    public void onClick(View v){
+                        adapter.deleteItem(3, userId, targetInfo.getUniqueId());
+                        showDialog.dismiss();
+                    }
+                };
                 showDialog.show();
+                showDialog.setEditListener(mEditListener);
+                showDialog.setDeleteListener(mDeleteListener);
             }
         });
         /*
@@ -434,6 +465,44 @@ public class ContactActivity extends AppCompatActivity
             }while(cursor.moveToNext());
         }
     }
+    private class getCustomTask extends AsyncTask<String, String, String>{
+        String sendPost(String uid){
+            OkHttpClient client = new OkHttpClient();
+            Request request = new Request.Builder()
+                    .url("http://52.78.17.108:50045/contact/show/"+uid+"/custom/")
+                    .build();
+            try{
+                Response response = client.newCall(request).execute();
+                return response.body().string();
+            }catch(Exception e){
+                e.printStackTrace();
+                return "";
+            }
+        }
+        @Override
+        protected String doInBackground(String... apiUrl) {
+            return sendPost(apiUrl[0]);
+        }
+        @Override
+        protected void onPostExecute(String res){
+            if(res != null) {
+                super.onPostExecute(res);
+                try {
+                    JSONArray jsonArray = new JSONArray(res);
+                    System.out.println("length: " + jsonArray.length());
+                    for (int i = 0; i < jsonArray.length(); i++) {
+                        JSONObject jsonObj = jsonArray.getJSONObject(i);
+                        addItem(3, jsonObj.getString("name"), jsonObj.getString("email"), jsonObj.getString("phone"), jsonObj.getString("pictureEnc"), jsonObj.getString("_id"));
+                    }
+                } catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    };
+    public void syncCustom(){
+        new getCustomTask().execute(userId);
+    }
     @SuppressWarnings("StatementWithEmptyBody")
     @Override
     public boolean onNavigationItemSelected(MenuItem item) {
@@ -452,6 +521,7 @@ public class ContactActivity extends AppCompatActivity
             Intent intent = new Intent(ContactActivity.this, ContactAddActivity.class);
             System.out.println(userId);
             intent.putExtra("userId", userId);
+            intent.putExtra("uniqueId", "");
             startActivityForResult(intent, 808);
         } else if (id == R.id.nav_syncFacebook) {
             syncFacebook();
@@ -492,7 +562,6 @@ public class ContactActivity extends AppCompatActivity
         drawer.closeDrawer(GravityCompat.START);
         return true;
     }
-
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
@@ -508,7 +577,20 @@ public class ContactActivity extends AppCompatActivity
                 } catch (Exception e) {
                 }
             }
-        }else {
+        }else if(requestCode == 809){
+            if(resultCode == RESULT_OK) {
+                try {
+                    System.out.println("Server Update");
+                    String newPhone = data.getExtras().getString("Phone");
+                    String newEmail = data.getExtras().getString("Email");
+                    String newName = data.getExtras().getString("Name");
+                    String newPic = data.getExtras().getString("Pic");
+                    String uniqueId = data.getExtras().getString("uniqueId");
+                    adapter.editItem(3, newName, newEmail, newPhone, newPic, uniqueId);
+                }catch(Exception e){
+                }
+            }
+        }else{
             callbackManager.onActivityResult(requestCode, resultCode, data);
         }
     }

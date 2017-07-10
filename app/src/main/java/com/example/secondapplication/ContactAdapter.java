@@ -24,6 +24,12 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 
+import okhttp3.MediaType;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
+
 /**
  * Created by q on 2017-07-08.
  */
@@ -104,8 +110,87 @@ public class ContactAdapter extends BaseAdapter{
         if(mode == 3) customList.add(newContact);
         if(showMode == mode || showMode == 0){
             contactList.add(newContact);
+            //if(mode != 3) {
             this.notifyDataSetChanged();
             sortItem();
+            //}
+        }
+    }
+    public void editItem(int mode, String name, String email, String phone, String picUrl, String uniqueId){
+        if(mode == 3){
+            System.out.println(name + " " + email + " " + phone);
+            for(int i=0;i<customList.size();i++){
+                if(customList.get(i).getUniqueId().compareTo(uniqueId) == 0){
+                    customList.set(i, new ContactInfo(mode, name, email, phone, picUrl, uniqueId));
+                    break;
+                }
+            }
+            if(showMode == mode || showMode == 0){
+                System.out.println("upd: "+name + " " + email + " " + phone);
+                for(int i=0;i<contactList.size();i++){
+                    if(contactList.get(i).getUniqueId().compareTo(uniqueId) == 0){
+                        contactList.set(i, new ContactInfo(mode, name, email, phone, picUrl, uniqueId));
+                        break;
+                    }
+                }
+                notifyDataSetChanged();
+                sortItem();
+            }
+        }
+    }
+    private class deleteContactTask extends AsyncTask<String, String, String>{
+        private final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
+        private String uniqueId;
+        String sendPost(String uid){
+            OkHttpClient client = new OkHttpClient();
+            RequestBody body = RequestBody.create(JSON, "{\"contactId\": \"" + uniqueId + "\"}");
+            Request request =
+                    new Request.Builder()
+                            .url("http://52.78.17.108:50045/contact/delete/" + uid + "/custom/")
+                            .post(body)
+                            .build();
+            try{
+                Response response = client.newCall(request).execute();
+                return response.body().string();
+            }catch(Exception e){
+                e.printStackTrace();
+                return "";
+            }
+        }
+        public deleteContactTask(String _uniqueId){
+            uniqueId = _uniqueId;
+        }
+        @Override
+        protected String doInBackground(String... url){
+            return sendPost(url[0]);
+        }
+        @Override
+        protected void onPostExecute(String data){
+            if(data != null){
+                super.onPostExecute(data);
+                System.out.println(data);
+                for(int i=0;i<customList.size();i++){
+                    if(customList.get(i).getUniqueId().compareTo(uniqueId) == 0){
+                        customList.remove(i);
+                        break;
+                    }
+                }
+                if(showMode == 3 || showMode == 0){
+                    for(int i=0;i<contactList.size();i++){
+                        if(contactList.get(i).getUniqueId().compareTo(uniqueId) == 0){
+                            contactList.remove(i);
+                            break;
+                        }
+                    }
+                    notifyDataSetChanged();
+                    sortItem();
+                }
+            }
+        }
+    };
+    public void deleteItem(int mode, String uid, String uniqueId){
+        if(mode == 3){
+            new deleteContactTask(uniqueId).execute(uid);
         }
     }
     public void deleteAll(int mode){

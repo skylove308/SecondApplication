@@ -3,6 +3,7 @@ package com.example.secondapplication;
 import android.Manifest;
 import android.app.Dialog;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
 import android.net.Uri;
@@ -27,6 +28,7 @@ public class ContactViewDialog extends Dialog {
     private ContactInfo mContent;
     private String phoneNum;
     private Context mContext;
+    private Button mEditButton, mDeleteButton, mCloseButton;
     //private View.OnClickListener edit, delete, close;
     public String getPhoneNumber(){
         return phoneNum;
@@ -36,6 +38,12 @@ public class ContactViewDialog extends Dialog {
         mContext = context;
         mContent = content;
         //edit = editListener; delete = deleteListener; close = closeListener;
+    }
+    public void setEditListener(View.OnClickListener editListener){
+        mEditButton.setOnClickListener(editListener);
+    }
+    public void setDeleteListener(View.OnClickListener deleteListener){
+        mDeleteButton.setOnClickListener(deleteListener);
     }
     private void doCall(){
         System.out.println("!!!");
@@ -74,9 +82,9 @@ public class ContactViewDialog extends Dialog {
         if(place == 2){
             ((LinearLayout) findViewById(R.id.showEmailLayout)).setVisibility(View.GONE);
         }
-        Button mEditButton = (Button) findViewById(R.id.contactButtonEdit);
-        Button mDeleteButton = (Button) findViewById(R.id.contactButtonDelete);
-        Button mCloseButton = (Button) findViewById(R.id.contactButtonClose);
+        mEditButton = (Button) findViewById(R.id.contactButtonEdit);
+        mDeleteButton = (Button) findViewById(R.id.contactButtonDelete);
+        mCloseButton = (Button) findViewById(R.id.contactButtonClose);
         Button callButton = (Button) findViewById(R.id.contactCallButton);
         mCloseButton.setVisibility(View.VISIBLE);
         if(place == 1 || place == 2){
@@ -86,24 +94,26 @@ public class ContactViewDialog extends Dialog {
             mEditButton.setVisibility(View.VISIBLE);
             mDeleteButton.setVisibility(View.VISIBLE);
         }
+        /*
         mEditButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "편집", Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), "편집", Toast.LENGTH_SHORT).show();
                 dismiss();
             }
         });
         mDeleteButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "삭제", Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), "삭제", Toast.LENGTH_SHORT).show();
                 dismiss();
             }
         });
+        */
         mCloseButton.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                Toast.makeText(getContext(), "닫기", Toast.LENGTH_SHORT);
+                Toast.makeText(getContext(), "닫기", Toast.LENGTH_SHORT).show();
                 dismiss();
             }
         });

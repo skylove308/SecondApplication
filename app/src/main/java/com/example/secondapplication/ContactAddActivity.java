@@ -49,9 +49,13 @@ import okhttp3.Response;
 public class ContactAddActivity extends AppCompatActivity {
     private Button addButton;
     private ImageView imgView;
-    private String uid;
     private OkHttpClient client;
+
+    private String uid;
     private Bitmap newProfilePic = null;
+    private String myName = "", myPhone = "", myEmail = "";
+    private String uniqueId;
+
     private Uri uri;
     private final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
 
@@ -59,9 +63,14 @@ public class ContactAddActivity extends AppCompatActivity {
     Uri photoUri, albumUri;
     boolean isAlbum = false;
 
+    private EditText nameText, emailText, phoneText;
+
     @Override
     public void onSaveInstanceState(Bundle savedInstanceState) {
         savedInstanceState.putParcelable("newProfilePic", newProfilePic);
+        savedInstanceState.putString("name", nameText.getText().toString());
+        savedInstanceState.putString("email", emailText.getText().toString());
+        savedInstanceState.putString("phone", phoneText.getText().toString());
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults){
@@ -118,14 +127,34 @@ public class ContactAddActivity extends AppCompatActivity {
         intent.setType(android.provider.MediaStore.Images.Media.CONTENT_TYPE);
         startActivityForResult(intent, 22);
     }
-    private EditText nameText, emailText, phoneText;
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_contact_add);
         this.setTitle("커스텀 연락처 추가");
-        Intent intent = getIntent();
-        uid = intent.getStringExtra("userId");
+        nameText = (EditText) findViewById(R.id.editAddName);
+        emailText = (EditText) findViewById(R.id.editAddEmail);
+        phoneText = (EditText) findViewById(R.id.editAddPhone);
+        if(savedInstanceState != null){
+            newProfilePic = savedInstanceState.getParcelable("newProfilePic");
+            nameText.setText(savedInstanceState.getString("name"));
+            phoneText.setText(savedInstanceState.getString("phone"));
+            emailText.setText(savedInstanceState.getString("email"));
+        }else {
+            Intent intent = getIntent();
+            uid = intent.getStringExtra("userId");
+            uniqueId = intent.getStringExtra("uniqueId");
+            if (uniqueId.length() > 0) {
+                this.setTitle("커스텀 연락처 수정");
+                String myName = intent.getStringExtra("name");
+                String myPhone = intent.getStringExtra("phone");
+                String myEmail = intent.getStringExtra("email");
+                newProfilePic = intent.getParcelableExtra("pic");
+                nameText.setText(myName);
+                emailText.setText(myEmail);
+                phoneText.setText(myPhone);
+            }
+        }
         System.out.println(uid);
         imgView = (ImageView) findViewById(R.id.addContactImage);
         imgView.setOnClickListener(new View.OnClickListener() {
@@ -167,9 +196,6 @@ public class ContactAddActivity extends AppCompatActivity {
                         .show();
             }
         });
-        nameText = (EditText) findViewById(R.id.editAddName);
-        emailText = (EditText) findViewById(R.id.editAddEmail);
-        phoneText = (EditText) findViewById(R.id.editAddPhone);
         addButton = (Button) findViewById(R.id.addContactButton);
         addButton.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -178,15 +204,16 @@ public class ContactAddActivity extends AppCompatActivity {
                 String email = emailText.getText().toString();
                 String phone = phoneText.getText().toString();
                 if(name.length() > 0 && (email.length() > 0 || phone.length() > 0)){
-                    sendInformation(name, email, phone);
+                    if(uniqueId.length() == 0) {
+                        sendInformation("add", name, email, phone);
+                    }else{
+                        sendInformation("update", name, email, phone);
+                    }
                 }else{
                     Toast.makeText(v.getContext(), "내용을 채워주세요", Toast.LENGTH_LONG).show();
                 }
             }
         });
-        if(savedInstanceState != null){
-            newProfilePic = savedInstanceState.getParcelable("newProfilePic");
-        }
         if(newProfilePic != null) imgView.setImageBitmap(newProfilePic);
         else imgView.setImageResource(R.drawable.ic_account_circle_gray_24dp);
     }
@@ -244,13 +271,19 @@ public class ContactAddActivity extends AppCompatActivity {
             finish();
         }
     };
-    String sendInformation(final String name, final String email, final String phone){
+    String sendInformation(final String sendMode, final String name, final String email, final String phone){
         new Thread() {
             public void run() {
                 String imgEnc = encodeTobase64().trim();
                 String jsonStr = makeJson(name, email, phone, imgEnc);
                 System.out.println(jsonStr);
-                String response = sendPost("http://52.78.17.108:50045/contact/add/"+uid+"/custom", jsonStr);
+                String addr;
+                if(sendMode.compareTo("add") == 0){
+                    addr = "http://52.78.17.108:50045/contact/add/"+uid+"/custom/";
+                }else{
+                    addr = "http://52.78.17.108:50045/contact/update/"+uid+"/custom/"+uniqueId+"/";
+                }
+                String response = sendPost(addr, jsonStr);
                 Bundle bun = new Bundle();
                 bun.putString("RESPONSE", response);
                 bun.putString("Name", name);
