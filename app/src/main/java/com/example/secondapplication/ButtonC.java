@@ -40,6 +40,7 @@ public class ButtonC extends AppCompatActivity {
         ImageButton ib = (ImageButton) findViewById(R.id.mike);
         txv = (TextView) findViewById(R.id.problem);
         final Context mContext = ButtonC.this;
+        final String str;
         ib.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
