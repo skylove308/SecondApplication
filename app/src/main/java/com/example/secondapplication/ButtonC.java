@@ -1,6 +1,7 @@
 package com.example.secondapplication;
 
 import android.Manifest;
+import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
@@ -33,6 +34,7 @@ public class ButtonC extends AppCompatActivity {
     Intent intent;
     SpeechRecognizer mRecognizer;
     TextView txv;
+    final int REQUEST_AUDIO = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -40,6 +42,7 @@ public class ButtonC extends AppCompatActivity {
         setContentView(R.layout.activity_button_c);
         ImageButton ib = (ImageButton) findViewById(R.id.mike);
         txv = (TextView) findViewById(R.id.problem);
+        final Activity activity_c = this;
         intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
@@ -49,10 +52,34 @@ public class ButtonC extends AppCompatActivity {
         ib.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                mRecognizer.startListening(intent);
+                if(ContextCompat.checkSelfPermission(activity_c, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
+                    if(ActivityCompat.shouldShowRequestPermissionRationale(activity_c, Manifest.permission.RECORD_AUDIO)){
+
+                    }
+                    else{
+                        ActivityCompat.requestPermissions(activity_c, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_AUDIO);
+                    }
+                }
+                else{
+                    mRecognizer.startListening(intent);
+                }
             }
         });
     }
+
+    public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults){
+        switch (requestCode){
+            case REQUEST_AUDIO:
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
+                    mRecognizer.startListening(intent);
+                }
+                else{
+                    Toast.makeText(getApplicationContext(),"Audio Permission denied",Toast.LENGTH_LONG).show();
+                }
+                return;
+        }
+    }
+
     private RecognitionListener listener = new RecognitionListener() {
         @Override
         public void onReadyForSpeech(Bundle params) {
