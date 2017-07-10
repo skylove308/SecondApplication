@@ -12,6 +12,7 @@ import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
@@ -39,16 +40,19 @@ public class ContactAdapter extends BaseAdapter{
     private ArrayList<ContactInfo> facebookList = new ArrayList<ContactInfo>();
     private ArrayList<ContactInfo> phoneList = new ArrayList<ContactInfo>();
     private ArrayList<ContactInfo> customList = new ArrayList<ContactInfo>();
-
+    private ArrayList<ContactInfo> searchList = new ArrayList<ContactInfo>();
     private int imgMetric;
     private int showMode = 0;
     // 0: all, 1:facebook, 2:phone, 3:custom
+    private boolean search = false;
+    private String searchStr = "";
 
     public ArrayList<ContactInfo> getContactList(){return contactList;}
     public ArrayList<ContactInfo> getFacebookList(){return facebookList;}
     public ArrayList<ContactInfo> getPhoneList(){return phoneList;}
     public ArrayList<ContactInfo> getCustomList(){return customList;}
     public int getShowMode(){return showMode;}
+    public boolean getSearchMode(){return search;}
 
     public void setContactList(ArrayList<ContactInfo> list){contactList = list;}
     public void setFacebookList(ArrayList<ContactInfo> list){facebookList = list;}
@@ -67,6 +71,7 @@ public class ContactAdapter extends BaseAdapter{
     }
     @Override
     public int getCount(){
+        if(search) return searchList.size();
         return contactList.size();
     }
     @Override
@@ -75,7 +80,22 @@ public class ContactAdapter extends BaseAdapter{
     }
     @Override
     public Object getItem(int position){
+        if(search) return searchList.get(position);
         return contactList.get(position);
+    }
+
+    public void changeSearchMode(boolean newMode, String newStr){
+        search = newMode;
+        searchStr = newStr;
+        searchList.clear();
+        notifyDataSetChanged();
+        for(int i=0;i<contactList.size();i++){
+            ContactInfo target = contactList.get(i);
+            if(target.can(searchStr)){
+                searchList.add(target);
+                notifyDataSetChanged();
+            }
+        }
     }
 
     public void changeShowMode(int newMode){
@@ -85,23 +105,24 @@ public class ContactAdapter extends BaseAdapter{
         if(showMode == 0 || showMode == 1){
             for(int i=0;i<facebookList.size();i++){
                 contactList.add(facebookList.get(i));
-                this.notifyDataSetChanged();
+                if(!search) this.notifyDataSetChanged();
             }
         }
         if(showMode == 0 || showMode == 2){
             for(int i=0;i<phoneList.size();i++){
                 contactList.add(phoneList.get(i));
-                this.notifyDataSetChanged();
+                if(!search) this.notifyDataSetChanged();
             }
         }
         if(showMode == 0 || showMode == 3){
             for(int i=0;i<customList.size();i++){
                 contactList.add(customList.get(i));
-                this.notifyDataSetChanged();
+                if(!search) notifyDataSetChanged();
             }
         }
         sortItem();
-        this.notifyDataSetChanged();
+        notifyDataSetChanged();
+        if(search) changeSearchMode(search, searchStr);
     }
     public void addItem(int mode, String name, String email, String phone, String picUrl, String uniqueId){
         ContactInfo newContact = new ContactInfo(mode, name, email, phone, picUrl, uniqueId);
@@ -110,10 +131,9 @@ public class ContactAdapter extends BaseAdapter{
         if(mode == 3) customList.add(newContact);
         if(showMode == mode || showMode == 0){
             contactList.add(newContact);
-            //if(mode != 3) {
-            this.notifyDataSetChanged();
+            notifyDataSetChanged();
             sortItem();
-            //}
+            if(search) changeSearchMode(search, searchStr);
         }
     }
     public void editItem(int mode, String name, String email, String phone, String picUrl, String uniqueId){
@@ -135,6 +155,7 @@ public class ContactAdapter extends BaseAdapter{
                 }
                 notifyDataSetChanged();
                 sortItem();
+                if(search) changeSearchMode(search, searchStr);
             }
         }
     }
@@ -184,6 +205,7 @@ public class ContactAdapter extends BaseAdapter{
                     }
                     notifyDataSetChanged();
                     sortItem();
+                    if(search) changeSearchMode(search, searchStr);
                 }
             }
         }
@@ -198,10 +220,11 @@ public class ContactAdapter extends BaseAdapter{
         if(mode == 2) phoneList.clear();
         if(mode == 3) customList.clear();
         changeShowMode(showMode);
+        if(search) changeSearchMode(search, searchStr);
     }
     public void sortItem() {
         Collections.sort(contactList, cmpAsc);
-        this.notifyDataSetChanged();
+        notifyDataSetChanged();
     }
 
     private void showItem(ImageView imageView, TextView textView, ContactInfo nowInfo){
@@ -241,8 +264,12 @@ public class ContactAdapter extends BaseAdapter{
         }
         ImageView imageView = (ImageView) convertView.findViewById(R.id.contactImage);
         TextView textView = (TextView) convertView.findViewById(R.id.contactName);
-        ContactInfo nowInfo = (ContactInfo) getItem(position);
-        showItem(imageView, textView, nowInfo);
+        try {
+            ContactInfo nowInfo = (ContactInfo) getItem(position);
+            showItem(imageView, textView, nowInfo);
+        }catch(Exception e){
+            e.printStackTrace();
+        }
         return convertView;
     }
     class imgDownloadTask extends AsyncTask<String, Void, Bitmap> {

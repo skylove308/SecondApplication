@@ -16,6 +16,8 @@ import android.support.design.widget.FloatingActionButton;
 import android.support.design.widget.Snackbar;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.text.Editable;
+import android.text.TextWatcher;
 import android.util.TypedValue;
 import android.view.View;
 import android.support.design.widget.NavigationView;
@@ -29,10 +31,12 @@ import android.view.MenuItem;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.ListView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
@@ -78,6 +82,8 @@ public class ContactActivity extends AppCompatActivity
     private ListView listView;
     private boolean firstChangeMode = true;
     private String userId;
+    private EditText searchText;
+    private RelativeLayout searchView;
 
     void addItem(int mode, String name, String email, String phone, String picUrl, String uniqueId){
         adapter.addItem(mode, name, email, phone, picUrl, uniqueId);
@@ -252,6 +258,8 @@ public class ContactActivity extends AppCompatActivity
         savedInstanceState.putParcelableArrayList("facebookList", adapter.getFacebookList());
         savedInstanceState.putParcelableArrayList("phoneList", adapter.getPhoneList());
         savedInstanceState.putParcelableArrayList("customList", adapter.getCustomList());
+        savedInstanceState.putBoolean("search", adapter.getSearchMode());
+        savedInstanceState.putString("searchKeyword", searchText.getText().toString());
         super.onSaveInstanceState(savedInstanceState);
     }
     @Override
@@ -262,21 +270,13 @@ public class ContactActivity extends AppCompatActivity
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
-        fab.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                Snackbar.make(view, "Replace with your own action", Snackbar.LENGTH_LONG)
-                        .setAction("Action", null).show();
-            }
-        });
-
         DrawerLayout drawer = (DrawerLayout) findViewById(R.id.drawer_layout);
         ActionBarDrawerToggle toggle = new ActionBarDrawerToggle(
                 this, drawer, toolbar, R.string.navigation_drawer_open, R.string.navigation_drawer_close);
         drawer.setDrawerListener(toggle);
         toggle.syncState();
-
+        searchText = ((EditText) findViewById(R.id.contactSearchEdit));
+        searchView = ((RelativeLayout) findViewById(R.id.contactSearch));
         navigationView = (NavigationView) findViewById(R.id.nav_view);
         navigationView.setNavigationItemSelectedListener(this);
         navMenu = navigationView.getMenu();
@@ -287,6 +287,8 @@ public class ContactActivity extends AppCompatActivity
                 userEmail = savedInstanceState.getString("userEmail");
                 userId = savedInstanceState.getString("userId");
                 userBitmap = savedInstanceState.getParcelable("userBitmap");
+                String keyword = savedInstanceState.getString("searchKeyword");
+                searchText.setText(keyword);
                 adapter = new ContactAdapter(DPtoPX(50));
                 //ArrayList<ContactInfo> contactList = savedInstanceState.getParcelableArrayList("contactList");
                 //adapter.setContactList(contactList);
@@ -297,11 +299,15 @@ public class ContactActivity extends AppCompatActivity
                 adapter.setPhoneList(phoneList);
                 ArrayList<ContactInfo> customList = savedInstanceState.getParcelableArrayList("customList");
                 adapter.setCustomList(customList);
+                adapter.changeSearchMode(savedInstanceState.getBoolean("search"), keyword);
                 changeShowMode(showMode);
+                if(adapter.getSearchMode()) searchView.setVisibility(View.VISIBLE);
+                else searchView.setVisibility(View.GONE);
             }catch(Exception e){
                 e.printStackTrace();
             }
         }else {
+            ((RelativeLayout) findViewById(R.id.contactSearch)).setVisibility(View.GONE);
             adapter = new ContactAdapter(DPtoPX(50));
             changeShowMode(0);
             trySyncContact();
@@ -341,19 +347,29 @@ public class ContactActivity extends AppCompatActivity
                 showDialog.setDeleteListener(mDeleteListener);
             }
         });
-        /*
-        adapter.addItem("Jihoon Ko", "jihoonko@kaist.ac.kr", "01025569631",
-                "https://scontent.xx.fbcdn.net/v/t1.0-1/p50x50/12227170_906747612747392_849221077459147265_n.jpg?oh=a76984fe10c8e05746e112643ad95c86&oe=59C63D5A");
-        adapter.addItem("Jihoon Ko", "jihoonko@kaist.ac.kr", "01025569631",
-                "https://scontent.xx.fbcdn.net/v/t1.0-1/p50x50/12227170_906747612747392_849221077459147265_n.jpg?oh=a76984fe10c8e05746e112643ad95c86&oe=59C63D5A");
-        adapter.addItem("Jihoon Ko", "jihoonko@kaist.ac.kr", "01025569631",
-                "https://scontent.xx.fbcdn.net/v/t1.0-1/p50x50/12227170_906747612747392_849221077459147265_n.jpg?oh=a76984fe10c8e05746e112643ad95c86&oe=59C63D5A");
-        adapter.addItem("Jihoon Ko", "jihoonko@kaist.ac.kr", "01025569631",
-                "https://scontent.xx.fbcdn.net/v/t1.0-1/p50x50/12227170_906747612747392_849221077459147265_n.jpg?oh=a76984fe10c8e05746e112643ad95c86&oe=59C63D5A");
-        */
-        //adapter.deleteAll();
-        //System.out.println("Token: " + AccessToken.getCurrentAccessToken());
-        //loginTask();
+        FloatingActionButton fab = (FloatingActionButton) findViewById(R.id.fab);
+        fab.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View view) {
+                adapter.changeSearchMode(!(adapter.getSearchMode()), "");
+                if(adapter.getSearchMode()) searchView.setVisibility(View.VISIBLE);
+                else{
+                    searchView.setVisibility(View.GONE);
+                    searchText.setText("");
+                }
+            }
+        });
+        searchText.addTextChangedListener(new TextWatcher() {
+            @Override
+            public void beforeTextChanged(CharSequence s, int start, int count, int after) {}
+            @Override
+            public void onTextChanged(CharSequence s, int start, int before, int count) {}
+            @Override
+            public void afterTextChanged(Editable s) {
+                String str = s.toString();
+                adapter.changeSearchMode(adapter.getSearchMode(), str);
+            }
+        });
     }
     @Override
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults){
