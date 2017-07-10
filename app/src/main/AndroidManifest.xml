@@ -37,6 +37,9 @@
             </intent-filter>
         </activity>
         <activity android:name=".MainActivity"></activity>
+        <activity android:name=".ButtonB"></activity>
+        <activity android:name=".Image"></activity>
+        <activity android:name=".ButtonC"></activity>
         <activity
             android:name=".ContactActivity"
             android:label="@string/title_activity_contact"
