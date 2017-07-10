@@ -1,0 +1,53 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/nav_showAll"
+            android:icon="@drawable/ic_all_inclusive_black_24dp"
+            android:checked="true"
+            android:title="전체 보기" />
+        <item
+            android:id="@+id/nav_showFacebook"
+            android:icon="@drawable/ic_cloud_black_24dp"
+            android:title="Facebook 친구만 보기" />
+        <item
+            android:id="@+id/nav_showContact"
+            android:icon="@drawable/ic_adb_black_24dp"
+            android:title="핸드폰 연락처만 보기" />
+        <item
+            android:id="@+id/nav_showCustom"
+            android:icon="@drawable/ic_account_circle_black_24dp"
+            android:title="커스텀 연락처만 보기" />
+    </group>
+
+    <item android:title="작업">
+        <menu android:id="@+id/contactTaskMenu">
+            <item
+                android:id="@+id/nav_syncFacebook"
+                android:icon="@drawable/ic_menu_share"
+                android:title="Facebook 동기화" />
+            <item
+                android:id="@+id/nav_syncPhone"
+                android:icon="@drawable/ic_menu_share"
+                android:title="핸드폰 동기화" />
+            <item
+                android:id="@+id/nav_syncCustom"
+                android:icon="@drawable/ic_menu_share"
+                android:title="커스텀 연락처 동기화" />
+            <item
+                android:id="@+id/nav_addContact"
+                android:icon="@drawable/ic_person_add_black_24dp"
+                android:title="커스텀 연락처 추가" />
+            <item
+                android:id="@+id/nav_login"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Facebook 로그인" />
+            <item
+                android:id="@+id/nav_logout"
+                android:icon="@drawable/ic_menu_send"
+                android:title="Facebook 로그아웃" />
+        </menu>
+    </item>
+
+</menu>

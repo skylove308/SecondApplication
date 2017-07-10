@@ -17,6 +17,9 @@ allprojects {
         jcenter()
         maven { url "https://jitpack.io" }
     }
+    repositories {
+        mavenCentral()
+    }
 }
 
 task clean(type: Delete) {
