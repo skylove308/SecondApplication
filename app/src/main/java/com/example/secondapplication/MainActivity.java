@@ -57,11 +57,19 @@ public class MainActivity extends AppCompatActivity {
         Button buttona = (Button) findViewById(R.id.buttona);
 
         Button buttonb = (Button) findViewById(R.id.buttonb);
-
         buttonb.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(getApplicationContext(), ButtonB.class);
+                startActivity(intent);
+            }
+        });
+
+        Button buttonc = (Button) findViewById(R.id.buttonc);
+        buttonc.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(getApplicationContext(), ButtonC.class);
                 startActivity(intent);
             }
         });
