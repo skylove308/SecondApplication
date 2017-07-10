@@ -1,0 +1,124 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="com.example.secondapplication.ButtonD">
+    <RelativeLayout
+        android:layout_width="match_parent"
+        android:layout_height="64dp"
+        android:id="@+id/header"
+        android:background="@color/com_facebook_blue"
+        >
+        <ImageView
+            android:id="@+id/profileImage"
+            android:layout_width="50dp"
+            android:layout_height="match_parent"
+            android:layout_margin="7dp"
+            android:src="@drawable/ic_account_circle_gray_24dp"
+            />
+
+        <TextView
+            android:id="@+id/profileName"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            android:textSize="25sp"
+            android:textColor="#FFFFFFFF"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp"
+            android:text="Jihoon Ko"
+            android:gravity="center_vertical"
+            android:includeFontPadding="false"
+
+            android:layout_toLeftOf="@+id/fbLogout"
+            android:layout_toStartOf="@+id/fbLogout"
+            android:layout_toRightOf="@+id/profileImage"
+            android:layout_toEndOf="@+id/profileImage" />
+
+        <Button
+            android:id="@+id/fbLogout"
+            style="@style/Widget.AppCompat.Button.Borderless.Colored"
+            android:layout_width="wrap_content"
+            android:layout_height="match_parent"
+            android:layout_alignParentRight="true"
+            android:textSize="17sp"
+            android:text="Log Out" />
+    </RelativeLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"
+        android:layout_below="@+id/header"
+        android:layout_above="@+id/footer_mike"
+        android:gravity="center_vertical"
+        android:orientation="vertical"
+        >
+        <TextView
+            android:id="@+id/showStatus"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:textAlignment="center"
+            android:textSize="20sp"
+            android:text="Try 3 / 10"
+            android:layout_margin="10dp"
+            />
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAlignment="textEnd"
+                android:textSize="15sp"
+                android:text="Expected: "/>
+            <TextView
+                android:id="@+id/expectedText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:textSize="30sp"
+                android:paddingLeft="15dp"
+                android:text="Hello"
+                />
+        </LinearLayout>
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_margin="10dp"
+            android:orientation="horizontal">
+            <TextView
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:textAlignment="textEnd"
+                android:textSize="15sp"
+                android:text="You said: "/>
+            <TextView
+                android:id="@+id/resultText"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="2"
+                android:textSize="30sp"
+                android:paddingLeft="15dp"
+                android:text=""
+                />
+        </LinearLayout>
+    </LinearLayout>
+    <LinearLayout
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:gravity="center"
+        android:id="@+id/footer_mike"
+        android:layout_marginBottom="15dp">
+        <Button
+            android:id="@+id/voiceButton"
+            android:layout_width="100dp"
+            android:layout_height="100dp"
+            android:background="@drawable/mike"
+            />
+    </LinearLayout>
+</RelativeLayout>
