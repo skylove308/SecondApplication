@@ -9,21 +9,22 @@
     android:orientation="vertical">
 
     <Button
-        android:id="@+id/buttona"
+        android:id="@+id/camera_button"
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:text="내 친구들" />
+        android:text="사진찍기" />
 
-    <Button
-        android:id="@+id/buttonb"
+    <GridView
+        android:id="@+id/gridview"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="내 갤러리" />
+        android:layout_height="match_parent"
+        android:columnWidth="90dp"
+        android:gravity="center"
+        android:horizontalSpacing="10dp"
+        android:numColumns="3"
+        android:stretchMode="columnWidth"
+        android:verticalSpacing="10dp" />
 
-    <Button
-        android:id="@+id/buttonc"
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="내 갤러리" />
+
 
 </LinearLayout>
