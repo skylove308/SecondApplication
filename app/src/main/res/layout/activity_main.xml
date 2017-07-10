@@ -11,19 +11,36 @@
     <Button
         android:id="@+id/buttona"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="내 친구들" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
+
+        android:text="\nContact  "
+        android:textAlignment="textEnd"
+        android:textColor="#FFFFFFFF"
+        android:textSize="40sp"
+        />
+    <!--android:background="@drawable/background_a"-->
 
     <Button
         android:id="@+id/buttonb"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="내 갤러리" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
 
+        android:text="\n  GALLERY"
+        android:textAlignment="textStart"
+        android:textColor="#FFFFFFFF"
+        android:textSize="40sp" />
+    <!--android:background="@drawable/background_b"-->
     <Button
         android:id="@+id/buttonc"
         android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:text="내 갤러리" />
+        android:layout_height="0dp"
+        android:layout_weight="1"
 
+        android:text="\nVOICE  \nRECOGNITION  "
+        android:textAlignment="textEnd"
+        android:textColor="#FFFFFFFF"
+        android:textSize="40sp" />
+    <!--android:background="@drawable/background_c"-->
 </LinearLayout>
