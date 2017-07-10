@@ -47,6 +47,10 @@ public class ContactInfo implements Parcelable{
         parcel.writeString(uniqueId);
         //parcel.writeParcelable(picThumb, flags);
     }
+    public boolean can(String searchKeyword){
+        searchKeyword = searchKeyword.toLowerCase();
+        return name.toLowerCase().contains(searchKeyword);
+    }
     public static final Parcelable.Creator<ContactInfo> CREATOR = new Creator<ContactInfo>() {
         @Override
         public ContactInfo createFromParcel(Parcel source) {
