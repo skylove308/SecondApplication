@@ -32,6 +32,8 @@ import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
 
+import com.bumptech.glide.Glide;
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 
@@ -43,6 +45,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
 import java.io.OutputStream;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.List;
@@ -70,6 +73,7 @@ public class ButtonB extends AppCompatActivity {
     protected void onCreate (Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_button_b);
+
         Bitmap bitmap1 = BitmapFactory.decodeResource(getResources(), R.drawable.jisoo);
         imageArray.add(bitmap1);
 
@@ -82,16 +86,98 @@ public class ButtonB extends AppCompatActivity {
         gv.setOnItemClickListener(galleryListener);
         gv.setOnItemLongClickListener(galleryLongListener);
 
+
+
+        Thread hi_t = new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    HttpUrl.Builder urlBuilder = HttpUrl.parse("http://52.78.17.108:3001/api/books/").newBuilder();
+                    String url = urlBuilder.build().toString();
+                    GetHandler handler = new GetHandler();
+                    try{
+                        handler.execute(url).get();
+                    }
+                    catch(Exception e){
+                        e.printStackTrace();
+                    }
+                } catch(Exception e){
+                }
+            }
+        });
+        hi_t.start();
+
+        /*
         HttpUrl.Builder urlBuilder = HttpUrl.parse("http://52.78.17.108:3001/api/books/").newBuilder();
         String url = urlBuilder.build().toString();
         GetHandler handler = new GetHandler();
         try{
             handler.execute(url).get();
-
         }
         catch(Exception e){
             e.printStackTrace();
         }
+
+*/
+        Intent intent = getIntent();
+        String action = intent.getAction();
+        String type = intent.getType();
+        if (Intent.ACTION_SEND.equals(action) && type != null) {
+            if ("text/plain".equals(type)) {
+                final String sharedText = intent.getStringExtra(Intent.EXTRA_TEXT);    // 가져온 인텐트의 텍스트 정보
+                if(sharedText.contains(".jpg")){
+                    Thread t = new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            try{
+                                URL url = new URL(sharedText);
+                                InputStream is = url.openStream();
+                                final Bitmap bm = BitmapFactory.decodeStream(is);
+                                imageArray.add(bm);
+                                adapter.notifyDataSetChanged();
+
+                                Thread t1 = new Thread(new Runnable() {
+                                    @Override
+                                    public void run() {
+                                        try{
+                                            ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                                            bm.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                                            byte[] b = baos.toByteArray();
+                                            String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
+                                            HttpUrl.Builder urlBuilder = HttpUrl.parse("http://52.78.17.108:3001/api/books").newBuilder();
+                                            String url_new = urlBuilder.build().toString();
+                                            PostHandler handler = new PostHandler(imageEncoded, "photo1");
+                                            String result = null;
+                                            try {
+                                                result = handler.execute(url_new).get();
+                                            } catch (InterruptedException e) {
+                                                e.printStackTrace();
+                                            } catch (ExecutionException e) {
+                                                e.printStackTrace();
+                                            }
+                                        } catch(Exception e){
+
+                                        }
+
+                                    }
+                                });
+                                t1.start();
+
+                            } catch(Exception e){
+
+                            }
+
+                        }
+                    });
+                    t.start();
+
+                }
+                else{
+                    Toast.makeText(this, "이미지 파일이 아닙니다.", Toast.LENGTH_LONG).show();
+                }
+            }
+        }
+
 
         Button camera_button = (Button) findViewById(R.id.camera_button);
         camera_button.setOnClickListener(new View.OnClickListener() {
@@ -319,6 +405,18 @@ public class ButtonB extends AppCompatActivity {
             return null;
         }
     }
+
+    public class AsyncTaskLoadFiles extends AsyncTask<Void, String, Void> {
+        @Override
+        protected Void doInBackground(Void ...params){
+            return null;
+        }
+        @Override
+        protected void onPostExecute(Void result){
+
+        }
+    }
+
 }
 
 
@@ -337,7 +435,8 @@ class GalleryAdapter extends BaseAdapter{
         }
         Bitmap bitmap = imageShow.get(position);
         if(bitmap != null){
-            new GetView(convertView).execute(position);
+            ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
+            imageView.setImageBitmap(bitmap);
         }
         return convertView;
     }
@@ -353,6 +452,7 @@ class GalleryAdapter extends BaseAdapter{
         return position;
     }
 
+    /*
     public class GetView extends AsyncTask<Integer, Void, Bitmap> {
         View convertView;
         public GetView(View convertView) {
@@ -360,13 +460,13 @@ class GalleryAdapter extends BaseAdapter{
         }
         @Override
         protected Bitmap doInBackground(Integer ...positions) {
-            /*
+
             Bitmap bitmap = imageShow.get(positions[0]);
             BitmapFactory.Options options = new BitmapFactory.Options();
             options.inSampleSize = 4;
             Bitmap resized = Bitmap.createScaledBitmap(bitmap, 90, 100, true);
             return resized;
-            */
+
             return imageShow.get(positions[0]);
         }
         @Override
@@ -375,5 +475,6 @@ class GalleryAdapter extends BaseAdapter{
             imageView.setImageBitmap(resized);
         }
     }
+    */
 
 }
