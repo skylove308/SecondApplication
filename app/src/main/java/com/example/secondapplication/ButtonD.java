@@ -19,6 +19,8 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
+import android.view.Window;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.RelativeLayout;
@@ -35,6 +37,7 @@ import com.facebook.HttpMethod;
 import com.facebook.login.LoginManager;
 import com.facebook.login.LoginResult;
 
+import org.json.JSONArray;
 import org.json.JSONObject;
 
 import java.io.BufferedReader;
@@ -61,14 +64,12 @@ import okhttp3.Response;
 public class ButtonD extends AppCompatActivity {
     private ImageView profile;
     private TextView nameText, profileResult;
-    private Button voiceButton, fbLogout;
+    private Button voiceButton, statButton, fbLogout;
     private TextView resultText, expectedText, showStatus;
     private RelativeLayout voiceLayout;
     private SpeechRecognizer mRecognizer;
     final int REQUEST_AUDIO = 1;
     private Intent intent;
-    private int successTry, failTry;
-    final String[] testStr = {"Worcestershire", "Specific", "Squirrel", "Brewery", "Phenomenon", "Derby", "Regularly", "February", "Edited", "Heir"};
 
     private boolean isLogin;
     private boolean first = true;
@@ -77,6 +78,9 @@ public class ButtonD extends AppCompatActivity {
     private String userId, userName, userPicUrl;
     private Bitmap userBitmap;
     private int attempt, success;
+
+    private String targetString;
+    private int wordSuccess, wordAttempt;
 
     private class getProfileTask extends AsyncTask<String, Void, String>{
         @Override
@@ -159,6 +163,9 @@ public class ButtonD extends AppCompatActivity {
                                     showStatus.setText("아래 마이크 버튼을 누르세요");
                                     nameText.setText(userName);
                                     fbLogout.setText("LOG OUT");
+                                    resultText.setText("");
+                                    expectedText.setText("");
+                                    statButton.setVisibility(View.INVISIBLE);
                                     new getProfileTask().execute(userPicUrl);
                                 } catch (Exception e) {
                                     e.printStackTrace();
@@ -183,13 +190,11 @@ public class ButtonD extends AppCompatActivity {
         profileResult = (TextView) findViewById(R.id.profileResult);
 
         voiceButton = (Button) findViewById(R.id.voiceButton);
+        statButton = (Button) findViewById(R.id.statButton);
 
         resultText = (TextView) findViewById(R.id.resultText);
         expectedText = (TextView) findViewById(R.id.expectedText);
         showStatus = (TextView) findViewById(R.id.showStatus);
-
-        successTry = 0;
-        failTry = 0;
 
         voiceLayout = (RelativeLayout) findViewById(R.id.voiceLayout);
         voiceLayout.setVisibility(View.GONE);
@@ -250,9 +255,16 @@ public class ButtonD extends AppCompatActivity {
                 }
             }
         });
+        statButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                new getStatTask().execute(targetString);
+            }
+        });
     }
     public void doVoiceTask(){
         voiceButton.setVisibility(View.INVISIBLE);
+        statButton.setVisibility(View.INVISIBLE);
         //String targetStr = testStr[new Random().nextInt(testStr.length)];
         //expectedText.setText(targetStr);
         expectedText.setText("");
@@ -260,9 +272,60 @@ public class ButtonD extends AppCompatActivity {
         showStatus.setText("띠링 소리가 나면 말하세요");
         new getProblemTask().execute();
     }
+    private class getStatTask extends AsyncTask<String, Void, String>{
+        private voiceResultDialog dialog = null;
+        /*
+        public getStatTask(voiceResultDialog _dialog){
+            dialog = _dialog;
+        }
+        */
+        @Override
+        protected void onPreExecute(){
+            statButton.setText("LOADING...");
+            super.onPreExecute();
+        }
+        String sendPost(String keyword){
+            String url = "http://52.78.17.108:50045/voice/result/"+keyword+"/";
+            OkHttpClient client = new OkHttpClient();
+            Request request =
+                    new Request.Builder()
+                            .url(url)
+                            .build();
+            try{
+                Response response = client.newCall(request).execute();
+                return response.body().string();
+            }catch(Exception e){
+                e.printStackTrace();
+                return null;
+            }
+        }
+        @Override
+        protected String doInBackground(String... str){
+            String res = sendPost(str[0]);
+            if(res == null) return null;
+            else return res;
+        }
+        @Override
+        protected void onPostExecute(String result){
+            if(result == null) return;
+            super.onPostExecute(result);
+            try {
+                JSONArray jsonArray = new JSONArray(result);
+                if(jsonArray != null){
+                    voiceResultDialog statDialog = new voiceResultDialog(ButtonD.this, jsonArray, wordAttempt, targetString);
+                    statButton.setText("SHOW STATISTICS");
+                    statDialog.show();
+                }else{
+                    statButton.setText("ERROR WHILE LOADING");
+                }
+            }catch(Exception e){
+                e.printStackTrace();
+                statButton.setText("ERROR WHILE LOADING");
+            }
+        }
+    };
     private class getProblemTask extends AsyncTask<String, Void, String>{
         private String myPath;
-        private int wordSuccess, wordAttempt;
         private File createMP3File() throws IOException {
             //String fileName = "tmp_" + String.valueOf(System.currentTimeMillis()) + ".mp3";
             String fileName = "tmp.mp3";
@@ -297,6 +360,7 @@ public class ButtonD extends AppCompatActivity {
                 JSONObject jsonObj = new JSONObject(jsonStr);
                 String targetStr = "";
                 targetStr = jsonObj.getString("word");
+                targetString = targetStr;
                 wordSuccess = jsonObj.getInt("success");
                 wordAttempt = jsonObj.getInt("attempt");
                 String apiUrl = "https://openapi.naver.com/v1/voice/tts.bin";
@@ -340,15 +404,30 @@ public class ButtonD extends AppCompatActivity {
             super.onPostExecute(res);
             System.out.println(res);
             try {
-                showStatus.setText(wordAttempt + "명 중 " + wordSuccess + "명이 성공한 단어");
                 expectedText.setText(res);
                 resultText.setText("");
+                final String finalRes = res;
                 MediaPlayer audioPlay = new MediaPlayer();
+                audioPlay.setOnPreparedListener(new MediaPlayer.OnPreparedListener() {
+                    @Override
+                    public void onPrepared(MediaPlayer mp) {
+                        expectedText.setText(finalRes);
+                        resultText.setText("");
+                        SystemClock.sleep(500);
+                        showStatus.setText(wordAttempt + "명 중 " + wordSuccess + "명이 성공한 단어");
+                    }
+                });
+                audioPlay.setOnCompletionListener(new MediaPlayer.OnCompletionListener() {
+                    @Override
+                    public void onCompletion(MediaPlayer mp) {
+                        SystemClock.sleep(500);
+                        mRecognizer.startListening(intent);
+                        mp.release();
+                    }
+                });
                 audioPlay.setDataSource(myPath);
                 audioPlay.prepare();
                 audioPlay.start();
-                SystemClock.sleep(2000);
-                mRecognizer.startListening(intent);
             }catch(Exception e){
                 e.printStackTrace();
             }
@@ -372,7 +451,7 @@ public class ButtonD extends AppCompatActivity {
         private final MediaType JSON = MediaType.parse("application/json; charset=utf-8");
         String makeJson(String expected, String result){
             return "{\"uid\" : \"" + userId + "\"," +
-                    "\"expected\" : \"" + expected + "\"," +
+                    "\"expected\" : \"" + targetString + "\"," +
                     "\"result\" : \"" + result + "\"}";
         }
         String sendPost(String url, String jsonStr){
@@ -416,10 +495,12 @@ public class ButtonD extends AppCompatActivity {
             }
             System.out.println("OK MAN!");
             super.onPostExecute(res);
+            wordAttempt += 1;
             attempt += 1; success += res;
             profileResult.setText(success + " Success / " + attempt + " Attempt");
             showStatus.setText("아래 마이크 버튼을 누르세요");
             voiceButton.setVisibility(View.VISIBLE);
+            statButton.setVisibility(View.VISIBLE);
         }
     };
     private RecognitionListener listener = new RecognitionListener() {
@@ -441,43 +522,47 @@ public class ButtonD extends AppCompatActivity {
         @Override
         public void onError(int error) {
             if(error == mRecognizer.ERROR_NETWORK_TIMEOUT){
-                Toast.makeText(getApplicationContext(),"네트워크 타임아웃 에러",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Error - 네트워크 타임아웃 에러",Toast.LENGTH_SHORT).show();
                 voiceButton.setVisibility(View.VISIBLE);
+                //statButton.setVisibility(View.VISIBLE);
             }
             else if(error == mRecognizer.ERROR_NETWORK){
-                Toast.makeText(getApplicationContext(),"네트워크 에러",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Error - 네트워크 에러",Toast.LENGTH_SHORT).show();
                 voiceButton.setVisibility(View.VISIBLE);
+                //statButton.setVisibility(View.VISIBLE);
             }
 
             else if(error == mRecognizer.ERROR_AUDIO){
-                Toast.makeText(getApplicationContext(),"녹음 에러",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Error - 녹음 에러",Toast.LENGTH_SHORT).show();
                 voiceButton.setVisibility(View.VISIBLE);
+                //statButton.setVisibility(View.VISIBLE);
             }
 
             else if(error == mRecognizer.ERROR_SERVER){
-                Toast.makeText(getApplicationContext(),"서버 에러",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Error - 서버 에러",Toast.LENGTH_SHORT).show();
                 voiceButton.setVisibility(View.VISIBLE);
+                //statButton.setVisibility(View.VISIBLE);
             }
 
             else if(error == mRecognizer.ERROR_CLIENT){
-                Toast.makeText(getApplicationContext(),"클라이언트 에러",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Error - 클라이언트 에러",Toast.LENGTH_SHORT).show();
                 voiceButton.setVisibility(View.VISIBLE);
+                //statButton.setVisibility(View.VISIBLE);
             }
             else if(error == mRecognizer.ERROR_SPEECH_TIMEOUT){
                 Toast.makeText(getApplicationContext(),"No - 이해 불가",Toast.LENGTH_SHORT).show();
                 resultText.setText("Can't Understand");
-                failTry++;
                 new sendResultTask().execute(expectedText.getText().toString().trim().toLowerCase(), "NO_ANSWER");
             }
             else if(error == mRecognizer.ERROR_NO_MATCH){
                 Toast.makeText(getApplicationContext(),"No - 이해 불가",Toast.LENGTH_SHORT).show();
                 resultText.setText("Can't Understand");
-                failTry++;
                 new sendResultTask().execute(expectedText.getText().toString().trim().toLowerCase(), "NO_ANSWER");
             }
             else if(error == mRecognizer.ERROR_RECOGNIZER_BUSY){
-                Toast.makeText(getApplicationContext(),"인스턴스가 바쁨",Toast.LENGTH_SHORT).show();
+                Toast.makeText(getApplicationContext(),"Error - 인스턴스가 바쁨",Toast.LENGTH_SHORT).show();
                 voiceButton.setVisibility(View.VISIBLE);
+                //statButton.setVisibility(View.VISIBLE);
             }
         }
         @Override
@@ -489,15 +574,13 @@ public class ButtonD extends AppCompatActivity {
             System.out.println(rs);
             mResult.toArray(rs);
             resultText.setText(""+rs[0]);
-            if(rs[0].trim().toLowerCase().compareTo(expectedText.getText().toString().trim().toLowerCase()) == 0){
-                successTry++;
+            String resultStr = rs[0].trim().toLowerCase().replaceAll(" ", "");
+            if(resultStr.compareTo(expectedText.getText().toString().trim().toLowerCase()) == 0){
                 Toast.makeText(getApplicationContext(),"Yes - 정답!",Toast.LENGTH_SHORT).show();
             }else{
-                failTry++;
                 Toast.makeText(getApplicationContext(),"No - 틀렸습니다",Toast.LENGTH_SHORT).show();
             }
-            new sendResultTask().execute(expectedText.getText().toString().trim().toLowerCase(), rs[0].trim().toLowerCase());
-            //showStatus.setText((successTry + failTry) + "개 중 " + successTry + "개 성공");
+            new sendResultTask().execute(expectedText.getText().toString().trim().toLowerCase(), resultStr);
         }
         @Override
         public void onPartialResults(Bundle partialResults) {
