@@ -5,7 +5,10 @@ import android.app.Activity;
 import android.content.Context;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.media.MediaPlayer;
+import android.net.Uri;
 import android.nfc.Tag;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.provider.MediaStore;
 import android.speech.RecognitionListener;
@@ -22,9 +25,27 @@ import android.widget.ImageButton;
 import android.widget.TextView;
 import android.widget.Toast;
 
-import java.util.ArrayList;
+import org.json.JSONArray;
+import org.json.JSONObject;
 
+import java.io.BufferedReader;
+import java.io.DataOutputStream;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
+import java.io.OutputStream;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.util.ArrayList;
+import java.util.Date;
+
+import okhttp3.FormBody;
 import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.RequestBody;
+import okhttp3.Response;
 
 /**
  * Created by q on 2017-07-10.
@@ -34,20 +55,27 @@ public class ButtonC extends AppCompatActivity {
     Intent intent;
     SpeechRecognizer mRecognizer;
     TextView txv;
+    TextView problem;
     final int REQUEST_AUDIO = 1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_button_c);
+
+        Button btn = (Button) findViewById(R.id.listen);
         ImageButton ib = (ImageButton) findViewById(R.id.mike);
-        txv = (TextView) findViewById(R.id.problem);
+        problem = (TextView) findViewById(R.id.problem);
+        problem.setText("hello");
+        txv = (TextView) findViewById(R.id.answer);
         final Activity activity_c = this;
         intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
         mRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         mRecognizer.setRecognitionListener(listener);
+
+        final Context mContext = this;
 
         ib.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -65,7 +93,82 @@ public class ButtonC extends AppCompatActivity {
                 }
             }
         });
+
+        btn.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                try{
+                    String apiURL = "https://openapi.naver.com/v1/voice/tts.bin";
+                    URL url = new URL(apiURL);
+                    String str = problem.getText().toString();
+                    String urltoString = url.toString();
+                    new postAPI().execute(urltoString, str);
+                }
+                catch(Exception e){
+                    Toast.makeText(mContext, ""+e, Toast.LENGTH_LONG).show();
+                }
+            }
+        });
     }
+
+    private class postAPI extends AsyncTask <String, Void, InputStream> {
+        @Override
+        protected InputStream doInBackground(String... strs) {
+            String clientId = "yOEwQnVHqevl28ryDqY1";
+            String clientSecret = "bC17RXc5Um";
+            try {
+                URL url = new URL(strs[0]);
+                HttpURLConnection con = (HttpURLConnection) url.openConnection();
+                con.setRequestMethod("POST");
+                con.setRequestProperty("X-Naver-Client-Id", clientId);
+                con.setRequestProperty("X-Naver-Client-Secret", clientSecret);
+                String postParams = "speaker=mijin&speed=0&text=" + strs[1];
+                con.setDoOutput(true);
+                DataOutputStream wr = new DataOutputStream(con.getOutputStream());
+                wr.writeBytes(postParams);
+                wr.flush();
+                wr.close();
+                int responseCode = con.getResponseCode();
+                BufferedReader br;
+                if (responseCode == 200) { // 정상 호출
+                    InputStream is = con.getInputStream();
+                    return is;
+                } else {  // 에러 발생
+                    return null;
+                }
+            }
+            catch(Exception e){
+                    return null;
+            }
+        }
+
+        @Override
+        protected void onPostExecute(InputStream res){
+            if(res != null) {
+                try{
+                    int read = 0;
+                    byte[] bytes = new byte[1024];
+                    String tempname = Long.valueOf(new Date().getTime()).toString();
+                    File f = new File(tempname + ".mp3");
+                    f.createNewFile();
+                    OutputStream outputStream = new FileOutputStream(f);
+                    while((read = res.read(bytes)) != -1){
+                        outputStream.write(bytes, 0, read);
+                    }
+                    res.close();
+
+                }
+                catch(Exception e){
+
+                }
+                Toast.makeText(ButtonC.this, ""+res, Toast.LENGTH_LONG).show();
+            }
+            else{
+                Toast.makeText(ButtonC.this, ""+res, Toast.LENGTH_LONG).show();
+            }
+        }
+    }
+
 
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults){
         switch (requestCode){

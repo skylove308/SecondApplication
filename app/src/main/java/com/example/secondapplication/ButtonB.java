@@ -3,8 +3,10 @@ package com.example.secondapplication;
 import android.Manifest;
 import android.app.Activity;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.pm.PackageManager;
+import android.content.res.AssetManager;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.media.Image;
@@ -15,6 +17,7 @@ import android.provider.ContactsContract;
 import android.provider.MediaStore;
 import android.support.v4.app.ActivityCompat;
 import android.support.v4.content.ContextCompat;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.Base64;
 import android.util.Log;
@@ -24,6 +27,7 @@ import android.view.ViewGroup;
 import android.widget.AdapterView;
 import android.widget.BaseAdapter;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.GridView;
 import android.widget.ImageView;
 import android.widget.Toast;
@@ -31,10 +35,12 @@ import android.widget.Toast;
 import org.json.JSONArray;
 import org.json.JSONObject;
 
+import java.io.BufferedReader;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
@@ -70,6 +76,7 @@ public class ButtonB extends AppCompatActivity {
         GridView gv = (GridView) findViewById(R.id.gridview);
         gv.setAdapter(adapter);
         gv.setOnItemClickListener(galleryListener);
+        gv.setOnItemLongClickListener(galleryLongListener);
 
         HttpUrl.Builder urlBuilder = HttpUrl.parse("http://52.78.17.108:3001/api/books/").newBuilder();
         String url = urlBuilder.build().toString();
@@ -78,7 +85,7 @@ public class ButtonB extends AppCompatActivity {
         try{
             result = handler.execute(url).get();
             JSONArray obj = new JSONArray(result);
-            for(int i = 10; i < obj.length(); i++){
+            for(int i = 0; i < obj.length(); i++){
                 JSONObject jason = obj.getJSONObject(i);
                 String str1 = jason.getString("title");
                 if(str1 != null){
@@ -124,6 +131,40 @@ public class ButtonB extends AppCompatActivity {
             byte[] b = baos.toByteArray();
             intent.putExtra("image", b);
             startActivity(intent);
+        }
+    };
+
+    private AdapterView.OnItemLongClickListener galleryLongListener = new AdapterView.OnItemLongClickListener(){
+        @Override
+        public boolean onItemLongClick(AdapterView<?> parent, View view, final int position, long l_position){
+            AlertDialog.Builder alert = new AlertDialog.Builder(ButtonB.this);
+            alert.setTitle("사진 삭제");
+            alert.setMessage("삭제하시겠습니까?");
+            alert.setPositiveButton("확인", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+                    Bitmap bitmap = imageArray.get(position);
+                    bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
+                    byte[] b = baos.toByteArray();
+                    String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
+                    HttpUrl.Builder urlBuilder = HttpUrl.parse("http://52.78.17.108:3001/api/books/delete/title").newBuilder().addQueryParameter("title", imageEncoded);
+                    String url = urlBuilder.build().toString();
+                    DeleteHandler handler = new DeleteHandler();
+                    handler.execute(url);
+                    imageArray.remove(imageArray.get(position));
+                    adapter.notifyDataSetChanged();
+                }
+            });
+            alert.setNegativeButton("취소", new DialogInterface.OnClickListener() {
+                public void onClick(DialogInterface dialog, int which) {
+                    dialog.dismiss();
+                }
+            });
+            alert.show();
+            /*
+
+            */
+            return true;
         }
     };
 
@@ -224,6 +265,27 @@ public class ButtonB extends AppCompatActivity {
         String author;
         public GetauthorHandler(String author) {
             this.author = author;
+        }
+        @Override
+        protected String doInBackground(String... params) {
+
+            Request request = new Request.Builder()
+                    .url(params[0])
+                    .build();
+            try {
+                Response response = client.newCall(request).execute();
+                if (!response.isSuccessful())
+                    throw new IOException("Unexpected code " + response.toString());
+                return response.body().string();
+            } catch (Exception e) {}
+            return null;
+        }
+    }
+
+    public class DeleteHandler extends AsyncTask<String, Void, String> {
+        OkHttpClient client = new OkHttpClient();
+        public DeleteHandler() {
+
         }
         @Override
         protected String doInBackground(String... params) {

@@ -211,7 +211,12 @@ public class ContactActivity extends AppCompatActivity
                                         JSONObject myInfo = response.getJSONObject();
                                         System.out.println(myInfo);
                                         String myName = myInfo.getString("name");
-                                        String myEmail = myInfo.getString("email");
+                                        String myEmail = "";
+                                        try {
+                                            myEmail = myInfo.getString("email");
+                                        }catch(Exception e){
+                                            myEmail = "NONE";
+                                        }
                                         String myId = myInfo.getString("id");
                                         String myPictureUrl = myInfo.getJSONObject("picture").getJSONObject("data").getString("url");
                                         userName = myName;
