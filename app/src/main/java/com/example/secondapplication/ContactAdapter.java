@@ -228,7 +228,9 @@ public class ContactAdapter extends BaseAdapter{
     }
 
     private void showItem(ImageView imageView, TextView textView, ContactInfo nowInfo){
-        int[] chooseColor = {R.drawable.ic_account_circle_gray_24dp, R.drawable.ic_account_circle_green_24dp, R.drawable.ic_account_circle_orange_24dp};
+        int[] chooseColor = {R.drawable.ic_account_circle_gray_24dp, R.drawable.ic_account_circle_green_24dp, R.drawable.ic_account_circle_orange_24dp,
+                             R.drawable.ic_account_circle_lime_24dp, R.drawable.ic_account_circle_purple_24dp, R.drawable.ic_account_circle_pink_24dp,
+                             R.drawable.ic_account_circle_lightblue_24dp};
         textView.setText(nowInfo.getName());
         imageView.setLayoutParams(new LinearLayout.LayoutParams((imgMetric * 14 / 10), (imgMetric * 11 / 10)));
         imageView.setScaleType(ImageView.ScaleType.FIT_XY);

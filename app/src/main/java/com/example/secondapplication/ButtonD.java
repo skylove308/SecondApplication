@@ -550,14 +550,12 @@ public class ButtonD extends AppCompatActivity {
                 //statButton.setVisibility(View.VISIBLE);
             }
             else if(error == mRecognizer.ERROR_SPEECH_TIMEOUT){
+                System.out.println("!");
                 Toast.makeText(getApplicationContext(),"No - 이해 불가",Toast.LENGTH_SHORT).show();
                 resultText.setText("Can't Understand");
                 new sendResultTask().execute(expectedText.getText().toString().trim().toLowerCase(), "NO_ANSWER");
             }
             else if(error == mRecognizer.ERROR_NO_MATCH){
-                Toast.makeText(getApplicationContext(),"No - 이해 불가",Toast.LENGTH_SHORT).show();
-                resultText.setText("Can't Understand");
-                new sendResultTask().execute(expectedText.getText().toString().trim().toLowerCase(), "NO_ANSWER");
             }
             else if(error == mRecognizer.ERROR_RECOGNIZER_BUSY){
                 Toast.makeText(getApplicationContext(),"Error - 인스턴스가 바쁨",Toast.LENGTH_SHORT).show();
