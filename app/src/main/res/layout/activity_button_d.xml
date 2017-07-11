@@ -18,23 +18,39 @@
             android:layout_margin="7dp"
             android:src="@drawable/ic_account_circle_gray_24dp"
             />
-
-        <TextView
-            android:id="@+id/profileName"
+        <LinearLayout
+            android:orientation="vertical"
             android:layout_width="match_parent"
             android:layout_height="match_parent"
-            android:textSize="25sp"
-            android:textColor="#FFFFFFFF"
-            android:layout_marginLeft="8dp"
-            android:layout_marginStart="8dp"
-            android:text="Loading..."
-            android:gravity="center_vertical"
-            android:includeFontPadding="false"
-
             android:layout_toLeftOf="@+id/fbLogout"
             android:layout_toStartOf="@+id/fbLogout"
             android:layout_toRightOf="@+id/profileImage"
-            android:layout_toEndOf="@+id/profileImage" />
+            android:layout_toEndOf="@+id/profileImage"
+            android:layout_marginLeft="8dp"
+            android:layout_marginStart="8dp">
+
+            <TextView
+                android:id="@+id/profileName"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="5"
+                android:gravity="center_vertical"
+                android:includeFontPadding="false"
+                android:text="Loading..."
+                android:textColor="#FFFFFFFF"
+                android:textSize="25sp" />
+
+            <TextView
+                android:id="@+id/profileResult"
+                android:layout_width="match_parent"
+                android:layout_height="0dp"
+                android:layout_weight="4"
+                android:gravity="center_vertical"
+                android:includeFontPadding="false"
+                android:text="0 Success / 0 Attempt"
+                android:textColor="#FFFFFFFF"
+                android:textSize="17sp" />
+        </LinearLayout>
 
         <Button
             android:id="@+id/fbLogout"
@@ -63,7 +79,7 @@
                 android:layout_height="wrap_content"
                 android:textAlignment="center"
                 android:textSize="20sp"
-                android:text="Try 3 / 10"
+                android:text="아래 마이크 버튼을 누르세요"
                 android:layout_margin="10dp"
                 />
             <LinearLayout
@@ -76,7 +92,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textAlignment="textEnd"
-                    android:textSize="15sp"
+                    android:textSize="18sp"
                     android:text="Expected: "/>
                 <TextView
                     android:id="@+id/expectedText"
@@ -85,7 +101,7 @@
                     android:layout_weight="2"
                     android:textSize="30sp"
                     android:paddingLeft="15dp"
-                    android:text="Hello"
+                    android:text=""
                     />
             </LinearLayout>
             <LinearLayout
@@ -98,7 +114,7 @@
                     android:layout_height="wrap_content"
                     android:layout_weight="1"
                     android:textAlignment="textEnd"
-                    android:textSize="15sp"
+                    android:textSize="18sp"
                     android:text="You said: "/>
                 <TextView
                     android:id="@+id/resultText"
