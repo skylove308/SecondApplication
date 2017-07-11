@@ -281,6 +281,7 @@ public class ContactAdapter extends BaseAdapter{
         }
         @Override
         protected void onPreExecute() {
+            iv.setImageResource(R.drawable.ic_image_black_24dp);
             super.onPreExecute();
         }
         private Bitmap downloadUrl(String imgUrl) throws IOException {

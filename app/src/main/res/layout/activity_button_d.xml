@@ -27,7 +27,7 @@
             android:textColor="#FFFFFFFF"
             android:layout_marginLeft="8dp"
             android:layout_marginStart="8dp"
-            android:text="Jihoon Ko"
+            android:text="Loading..."
             android:gravity="center_vertical"
             android:includeFontPadding="false"
 
@@ -45,80 +45,85 @@
             android:textSize="17sp"
             android:text="Log Out" />
     </RelativeLayout>
-    <LinearLayout
+    <RelativeLayout
         android:layout_width="match_parent"
         android:layout_height="match_parent"
         android:layout_below="@+id/header"
-        android:layout_above="@+id/footer_mike"
-        android:gravity="center_vertical"
-        android:orientation="vertical"
-        >
-        <TextView
-            android:id="@+id/showStatus"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:textAlignment="center"
-            android:textSize="20sp"
-            android:text="Try 3 / 10"
-            android:layout_margin="10dp"
-            />
+        android:id="@+id/voiceLayout">
         <LinearLayout
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:orientation="horizontal">
+            android:layout_height="match_parent"
+            android:layout_above="@+id/footer_mike"
+            android:gravity="center_vertical"
+            android:orientation="vertical"
+            >
             <TextView
-                android:layout_width="0dp"
+                android:id="@+id/showStatus"
+                android:layout_width="match_parent"
                 android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textAlignment="textEnd"
-                android:textSize="15sp"
-                android:text="Expected: "/>
-            <TextView
-                android:id="@+id/expectedText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:textSize="30sp"
-                android:paddingLeft="15dp"
-                android:text="Hello"
+                android:textAlignment="center"
+                android:textSize="20sp"
+                android:text="Try 3 / 10"
+                android:layout_margin="10dp"
                 />
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAlignment="textEnd"
+                    android:textSize="15sp"
+                    android:text="Expected: "/>
+                <TextView
+                    android:id="@+id/expectedText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:textSize="30sp"
+                    android:paddingLeft="15dp"
+                    android:text="Hello"
+                    />
+            </LinearLayout>
+            <LinearLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_margin="10dp"
+                android:orientation="horizontal">
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="1"
+                    android:textAlignment="textEnd"
+                    android:textSize="15sp"
+                    android:text="You said: "/>
+                <TextView
+                    android:id="@+id/resultText"
+                    android:layout_width="0dp"
+                    android:layout_height="wrap_content"
+                    android:layout_weight="2"
+                    android:textSize="30sp"
+                    android:paddingLeft="15dp"
+                    android:text=""
+                    />
+            </LinearLayout>
         </LinearLayout>
         <LinearLayout
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:layout_margin="10dp"
-            android:orientation="horizontal">
-            <TextView
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:textAlignment="textEnd"
-                android:textSize="15sp"
-                android:text="You said: "/>
-            <TextView
-                android:id="@+id/resultText"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="2"
-                android:textSize="30sp"
-                android:paddingLeft="15dp"
-                android:text=""
+            android:layout_alignParentBottom="true"
+            android:gravity="center"
+            android:id="@+id/footer_mike"
+            android:layout_marginBottom="15dp">
+            <Button
+                android:id="@+id/voiceButton"
+                android:layout_width="100dp"
+                android:layout_height="100dp"
+                android:background="@drawable/mike"
                 />
         </LinearLayout>
-    </LinearLayout>
-    <LinearLayout
-        android:layout_width="match_parent"
-        android:layout_height="wrap_content"
-        android:layout_alignParentBottom="true"
-        android:gravity="center"
-        android:id="@+id/footer_mike"
-        android:layout_marginBottom="15dp">
-        <Button
-            android:id="@+id/voiceButton"
-            android:layout_width="100dp"
-            android:layout_height="100dp"
-            android:background="@drawable/mike"
-            />
-    </LinearLayout>
+    </RelativeLayout>
 </RelativeLayout>

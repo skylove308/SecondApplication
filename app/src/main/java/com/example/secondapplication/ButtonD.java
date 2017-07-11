@@ -2,7 +2,10 @@ package com.example.secondapplication;
 
 import android.Manifest;
 import android.content.Intent;
+import android.content.pm.LauncherApps;
 import android.content.pm.PackageManager;
+import android.graphics.Bitmap;
+import android.graphics.BitmapFactory;
 import android.media.MediaPlayer;
 import android.os.AsyncTask;
 import android.os.Environment;
@@ -16,13 +19,20 @@ import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
 import android.view.View;
 import android.widget.Button;
+import android.widget.ImageView;
+import android.widget.RelativeLayout;
 import android.widget.TextView;
 import android.widget.Toast;
 
 import com.facebook.AccessToken;
+import com.facebook.CallbackManager;
+import com.facebook.FacebookCallback;
+import com.facebook.FacebookException;
 import com.facebook.GraphRequest;
 import com.facebook.GraphResponse;
 import com.facebook.HttpMethod;
+import com.facebook.login.LoginManager;
+import com.facebook.login.LoginResult;
 
 import java.io.BufferedReader;
 import java.io.DataOutputStream;
@@ -36,47 +46,120 @@ import java.net.HttpURLConnection;
 import java.net.URL;
 import java.nio.Buffer;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Random;
 
 public class ButtonD extends AppCompatActivity {
-    private Button voiceButton;
+    private ImageView profile;
+    private TextView nameText;
+    private Button voiceButton, fbLogout;
     private TextView resultText, expectedText, showStatus;
+    private RelativeLayout voiceLayout;
     private SpeechRecognizer mRecognizer;
     final int REQUEST_AUDIO = 1;
     private Intent intent;
     private int successTry, failTry;
     final String[] testStr = {"Worcestershire", "Specific", "Squirrel", "Brewery", "Phenomenon", "Derby", "Regularly", "February", "Edited", "Heir"};
+
+    private boolean isLogin;
+    private boolean first = true;
+    private CallbackManager callbackManager;
+
+    private String userId, userName, userPicUrl;
+    private Bitmap userBitmap;
+    private class getProfilePicTask extends AsyncTask<String, Void, Bitmap>{
+        @Override
+        protected Bitmap doInBackground(String... picurl){
+            System.out.println("trying to GET " + picurl[0]);
+            Bitmap bitmap = null;
+            InputStream iStream = null;
+            HttpURLConnection urlConnection = null;
+            try {
+                URL url = new URL(picurl[0]);
+                urlConnection = (HttpURLConnection) url.openConnection();
+                urlConnection.connect();
+                iStream = urlConnection.getInputStream();
+                bitmap = BitmapFactory.decodeStream(iStream);
+                iStream.close();
+                urlConnection.disconnect();
+                System.out.println("GET 200 OK / " + picurl[0]);
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
+            userBitmap = bitmap;
+            return bitmap;
+        }
+        @Override
+        protected void onPostExecute(Bitmap bm){
+            if(bm == null) return;
+            super.onPostExecute(bm);
+            profile.setImageBitmap(bm);
+        }
+    };
+    void loginTask(){
+        if(AccessToken.getCurrentAccessToken() == null){
+            if(isLogin || first){
+                profile.setImageResource(R.drawable.ic_account_circle_orange_24dp);
+                nameText.setText("로그인 해주세요");
+                fbLogout.setText("LOG IN");
+                voiceLayout.setVisibility(View.GONE);
+            }
+            isLogin = false;
+        }else {
+            if(!isLogin || first) {
+                new GraphRequest(
+                        AccessToken.getCurrentAccessToken(),
+                        "/me/?fields=id,name,picture.type(large)&locale=ko_KR",
+                        null,
+                        HttpMethod.GET,
+                        new GraphRequest.Callback() {
+                            public void onCompleted(GraphResponse response) {
+                                try {
+                                    System.out.println(response);
+                                    userId = response.getJSONObject().getString("id");
+                                    userName = response.getJSONObject().getString("name");
+                                    userPicUrl = response.getJSONObject().getJSONObject("picture").getJSONObject("data").getString("url");
+                                    voiceLayout.setVisibility(View.VISIBLE);
+                                    System.out.println(userId);
+                                    nameText.setText(userName);
+                                    fbLogout.setText("LOG OUT");
+                                    new getProfilePicTask().execute(userPicUrl);
+                                } catch (Exception e) {
+                                    e.printStackTrace();
+                                }
+                            }
+                        }
+                ).executeAsync();
+            }
+            isLogin = true;
+        }
+        first = false;
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_button_d);
+
+        profile = (ImageView) findViewById(R.id.profileImage);
+        nameText = (TextView) findViewById(R.id.profileName);
+        fbLogout = (Button) findViewById(R.id.fbLogout);
+
         voiceButton = (Button) findViewById(R.id.voiceButton);
+
         resultText = (TextView) findViewById(R.id.resultText);
         expectedText = (TextView) findViewById(R.id.expectedText);
         showStatus = (TextView) findViewById(R.id.showStatus);
+
         successTry = 0;
         failTry = 0;
+
         showStatus.setText("0개 중 0개 성공");
-        new GraphRequest(
-                AccessToken.getCurrentAccessToken(),
-                "/me/?fields=id,name,email,picture.type(large)&locale=ko_KR",
-                null,
-                HttpMethod.GET,
-                new GraphRequest.Callback() {
-                    public void onCompleted(GraphResponse response) {
-                        try {
-                            System.out.println(response);
-                            String id = response.getJSONObject().getString("id");
-                            String email = response.getJSONObject().getString("email");
-                            String name = response.getJSONObject().getString("name");
-                            String picture = response.getJSONObject().getJSONObject("picture").getJSONObject("data").getString("url");
-                            System.out.println(id);
-                        }catch(Exception e){
-                            e.printStackTrace();
-                        }
-                    }
-                }
-        ).executeAsync();
+
+        voiceLayout = (RelativeLayout) findViewById(R.id.voiceLayout);
+        voiceLayout.setVisibility(View.GONE);
+        loginTask();
+
         intent = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
         intent.putExtra(RecognizerIntent.EXTRA_CALLING_PACKAGE, getPackageName());
         intent.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "en-US");
@@ -84,25 +167,60 @@ public class ButtonD extends AppCompatActivity {
         mRecognizer = SpeechRecognizer.createSpeechRecognizer(this);
         mRecognizer.setRecognitionListener(listener);
 
-        voiceButton.setOnClickListener(new View.OnClickListener() {
+        fbLogout.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                if(ContextCompat.checkSelfPermission(ButtonD.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED){
-                    if(ActivityCompat.shouldShowRequestPermissionRationale(ButtonD.this, Manifest.permission.RECORD_AUDIO)){
+                if(AccessToken.getCurrentAccessToken() == null) {
+                    callbackManager = CallbackManager.Factory.create();
+                    LoginManager.getInstance().logInWithReadPermissions(ButtonD.this, Arrays.asList("public_profile", "email", "user_friends"));
+                    LoginManager.getInstance().registerCallback(callbackManager, new FacebookCallback<LoginResult>() {
+                        @Override
+                        public void onSuccess(LoginResult loginResult) {
+                            Toast.makeText(ButtonD.this, "Login Success", Toast.LENGTH_SHORT).show();
+                            loginTask();
+                        }
 
+                        @Override
+                        public void onCancel() {
+                            Toast.makeText(ButtonD.this, "Login Canceled", Toast.LENGTH_SHORT).show();
+                            loginTask();
+                        }
+
+                        @Override
+                        public void onError(FacebookException error) {
+                            Toast.makeText(ButtonD.this, "Login Error", Toast.LENGTH_SHORT).show();
+                            loginTask();
+                        }
+                    });
+                }else{
+                    if(AccessToken.getCurrentAccessToken() != null){
+                        LoginManager.getInstance().logOut();
+                        Toast.makeText(ButtonD.this, "로그아웃됨", Toast.LENGTH_SHORT).show();
                     }
-                    else{
-                        ActivityCompat.requestPermissions(ButtonD.this, new String[]{Manifest.permission.RECORD_AUDIO}, REQUEST_AUDIO);
-                    }
-                }
-                else{
-                    String targetStr = testStr[new Random().nextInt(testStr.length)];
-                    expectedText.setText(targetStr);
-                    resultText.setText("");
-                    new getSoundTask().execute(targetStr);
+                    loginTask();
                 }
             }
         });
+        voiceButton.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                if(ContextCompat.checkSelfPermission(ButtonD.this, Manifest.permission.RECORD_AUDIO) != PackageManager.PERMISSION_GRANTED
+                        || ContextCompat.checkSelfPermission(ButtonD.this, Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED
+                        || ContextCompat.checkSelfPermission(ButtonD.this, Manifest.permission.WRITE_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED){
+                    ActivityCompat.requestPermissions(ButtonD.this,
+                            new String[]{Manifest.permission.RECORD_AUDIO, Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE}, REQUEST_AUDIO);
+                }
+                else{
+                    doVoiceTask();
+                }
+            }
+        });
+    }
+    public void doVoiceTask(){
+        String targetStr = testStr[new Random().nextInt(testStr.length)];
+        expectedText.setText(targetStr);
+        resultText.setText("");
+        new getSoundTask().execute(targetStr);
     }
     private class getSoundTask extends AsyncTask<String, Void, String>{
         private String myPath;
@@ -175,8 +293,10 @@ public class ButtonD extends AppCompatActivity {
     public void onRequestPermissionsResult(int requestCode, String permissions[], int[] grantResults){
         switch (requestCode){
             case REQUEST_AUDIO:
-                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED){
-                    mRecognizer.startListening(intent);
+                if(grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[1] == PackageManager.PERMISSION_GRANTED
+                        && grantResults[2] == PackageManager.PERMISSION_GRANTED){
+                    doVoiceTask();
                 }
                 else{
                     Toast.makeText(getApplicationContext(),"Audio Permission denied",Toast.LENGTH_LONG).show();
@@ -221,10 +341,12 @@ public class ButtonD extends AppCompatActivity {
                 Toast.makeText(getApplicationContext(),"클라이언트 에러",Toast.LENGTH_SHORT).show();
             }
             else if(error == mRecognizer.ERROR_SPEECH_TIMEOUT){
+                Toast.makeText(getApplicationContext(),"No - 이해 불가",Toast.LENGTH_SHORT).show();
                 resultText.setText("Can't Understand");
                 failTry++;
             }
             else if(error == mRecognizer.ERROR_NO_MATCH){
+                Toast.makeText(getApplicationContext(),"No - 이해 불가",Toast.LENGTH_SHORT).show();
                 resultText.setText("Can't Understand");
                 failTry++;
             }
@@ -243,8 +365,10 @@ public class ButtonD extends AppCompatActivity {
             resultText.setText(""+rs[0]);
             if(rs[0].trim().toLowerCase().compareTo(expectedText.getText().toString().trim().toLowerCase()) == 0){
                 successTry++;
+                Toast.makeText(getApplicationContext(),"Yes - 정답!",Toast.LENGTH_SHORT).show();
             }else{
                 failTry++;
+                Toast.makeText(getApplicationContext(),"No - 틀렸습니다",Toast.LENGTH_SHORT).show();
             }
             showStatus.setText((successTry + failTry) + "개 중 " + successTry + "개 성공");
         }
@@ -255,4 +379,9 @@ public class ButtonD extends AppCompatActivity {
         public void onEvent(int eventType, Bundle params) {
         }
     };
+    @Override
+    protected void onActivityResult(int requestCode, int resultCode, Intent data) {
+        super.onActivityResult(requestCode, resultCode, data);
+        callbackManager.onActivityResult(requestCode, resultCode, data);
+    }
 }

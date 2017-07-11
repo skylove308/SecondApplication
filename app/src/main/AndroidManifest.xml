@@ -64,7 +64,8 @@
         </provider>
 
         <activity android:name=".ButtonD"
-            android:theme="@style/AppTheme.NoActionBar">
+            android:theme="@style/AppTheme.NoActionBar"
+            android:screenOrientation="portrait">
         </activity>
     </application>
 
