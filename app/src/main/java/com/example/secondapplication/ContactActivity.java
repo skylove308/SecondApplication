@@ -89,6 +89,14 @@ public class ContactActivity extends AppCompatActivity
         adapter.addItem(mode, name, email, phone, picUrl, uniqueId);
         changeShowMode(adapter.getShowMode());
     }
+    void editItem(int mode, String name, String email, String phone, String picUrl, String uniqueId){
+        adapter.editItem(mode, name, email, phone, picUrl, uniqueId);
+        changeShowMode(adapter.getShowMode());
+    }
+    void deleteItem(int mode, String uniqueId){
+        adapter.deleteItem(mode, userId ,uniqueId);
+        changeShowMode(adapter.getShowMode());
+    }
     void changeShowMode(int newMode){
         if(newMode != adapter.getShowMode() || firstChangeMode){
             firstChangeMode = false;
@@ -103,7 +111,9 @@ public class ContactActivity extends AppCompatActivity
         if(newMode == 1) titleString = "Facebook";
         if(newMode == 2) titleString = "핸드폰";
         if(newMode == 3) titleString = "커스텀";
-        titleString += " 주소록 (" + adapter.getCount() + ")";
+        titleString += " 주소록";
+        if(adapter.getSearchMode()) titleString += " 검색 결과";
+        titleString += " (" + adapter.getCount() + ")";
         this.setTitle(titleString);
     }
     void loginTask(int loginParam){
@@ -343,7 +353,7 @@ public class ContactActivity extends AppCompatActivity
                 View.OnClickListener mDeleteListener = new View.OnClickListener(){
                     @Override
                     public void onClick(View v){
-                        adapter.deleteItem(3, userId, targetInfo.getUniqueId());
+                        deleteItem(3, targetInfo.getUniqueId());
                         showDialog.dismiss();
                     }
                 };
@@ -373,6 +383,7 @@ public class ContactActivity extends AppCompatActivity
             public void afterTextChanged(Editable s) {
                 String str = s.toString();
                 adapter.changeSearchMode(adapter.getSearchMode(), str);
+                changeShowMode(adapter.getShowMode());
             }
         });
     }
@@ -607,7 +618,7 @@ public class ContactActivity extends AppCompatActivity
                     String newName = data.getExtras().getString("Name");
                     String newPic = data.getExtras().getString("Pic");
                     String uniqueId = data.getExtras().getString("uniqueId");
-                    adapter.editItem(3, newName, newEmail, newPhone, newPic, uniqueId);
+                    editItem(3, newName, newEmail, newPhone, newPic, uniqueId);
                 }catch(Exception e){
                 }
             }
