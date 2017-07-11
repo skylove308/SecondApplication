@@ -40,8 +40,11 @@ import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.OutputStream;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.List;
 import java.util.concurrent.ExecutionException;
 
@@ -61,6 +64,7 @@ public class ButtonB extends AppCompatActivity {
     final int REQUEST_TAKE_PHOTO = 2;
     ArrayList<Bitmap> imageArray = new ArrayList<>();
     GalleryAdapter adapter;
+    Context mContext = this;
 
     @Override
     protected void onCreate (Bundle savedInstanceState) {
@@ -81,25 +85,13 @@ public class ButtonB extends AppCompatActivity {
         HttpUrl.Builder urlBuilder = HttpUrl.parse("http://52.78.17.108:3001/api/books/").newBuilder();
         String url = urlBuilder.build().toString();
         GetHandler handler = new GetHandler();
-        String result = null;
         try{
-            result = handler.execute(url).get();
-            JSONArray obj = new JSONArray(result);
-            for(int i = 0; i < obj.length(); i++){
-                JSONObject jason = obj.getJSONObject(i);
-                String str1 = jason.getString("title");
-                if(str1 != null){
-                    byte[] decodedbyte = Base64.decode(str1, 0);
-                    Bitmap bitmap_hi = BitmapFactory.decodeByteArray(decodedbyte, 0, decodedbyte.length);
-                    imageArray.add(bitmap_hi);
-                    adapter.notifyDataSetChanged();
-                }
-            }
+            handler.execute(url).get();
+
         }
         catch(Exception e){
             e.printStackTrace();
         }
-
 
         Button camera_button = (Button) findViewById(R.id.camera_button);
         camera_button.setOnClickListener(new View.OnClickListener() {
@@ -144,15 +136,16 @@ public class ButtonB extends AppCompatActivity {
                 public void onClick(DialogInterface dialog, int which) {
                     ByteArrayOutputStream baos = new ByteArrayOutputStream();
                     Bitmap bitmap = imageArray.get(position);
+                    imageArray.remove(bitmap);
+                    adapter.notifyDataSetChanged();
                     bitmap.compress(Bitmap.CompressFormat.PNG, 100, baos);
                     byte[] b = baos.toByteArray();
                     String imageEncoded = Base64.encodeToString(b, Base64.DEFAULT);
-                    HttpUrl.Builder urlBuilder = HttpUrl.parse("http://52.78.17.108:3001/api/books/delete/title").newBuilder().addQueryParameter("title", imageEncoded);
+                    HttpUrl.Builder urlBuilder = HttpUrl.parse("http://52.78.17.108:3001/api/books/delete/title").newBuilder();
                     String url = urlBuilder.build().toString();
-                    DeleteHandler handler = new DeleteHandler();
+                    DeleteHandler handler = new DeleteHandler(imageEncoded);
                     handler.execute(url);
-                    imageArray.remove(imageArray.get(position));
-                    adapter.notifyDataSetChanged();
+
                 }
             });
             alert.setNegativeButton("취소", new DialogInterface.OnClickListener() {
@@ -258,6 +251,27 @@ public class ButtonB extends AppCompatActivity {
             } catch (Exception e) {}
             return null;
         }
+
+        @Override
+        protected void onPostExecute(String str){
+            try{
+                JSONArray obj = new JSONArray(str);
+                for(int i = 0; i < obj.length(); i++){
+                    JSONObject jason = obj.getJSONObject(i);
+                    String str1 = jason.getString("title");
+                    if(str1 != null){
+                        byte[] decodedbyte = Base64.decode(str1, 0);
+                        Bitmap bitmap_hi = BitmapFactory.decodeByteArray(decodedbyte, 0, decodedbyte.length);
+                        imageArray.add(bitmap_hi);
+                        adapter.notifyDataSetChanged();
+                    }
+                }
+            }
+            catch(Exception e){
+
+            }
+
+        }
     }
 
     public class GetauthorHandler extends AsyncTask<String, Void, String> {
@@ -284,14 +298,17 @@ public class ButtonB extends AppCompatActivity {
 
     public class DeleteHandler extends AsyncTask<String, Void, String> {
         OkHttpClient client = new OkHttpClient();
-        public DeleteHandler() {
-
+        String title;
+        public DeleteHandler(String title) {
+            this.title = title;
         }
         @Override
         protected String doInBackground(String... params) {
-
+            RequestBody formBody = new FormBody.Builder()
+                    .add("title", title)
+                    .build();
             Request request = new Request.Builder()
-                    .url(params[0])
+                    .url(params[0]).post(formBody)
                     .build();
             try {
                 Response response = client.newCall(request).execute();
@@ -320,8 +337,7 @@ class GalleryAdapter extends BaseAdapter{
         }
         Bitmap bitmap = imageShow.get(position);
         if(bitmap != null){
-            ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
-            imageView.setImageBitmap(bitmap);
+            new GetView(convertView).execute(position);
         }
         return convertView;
     }
@@ -336,4 +352,28 @@ class GalleryAdapter extends BaseAdapter{
     public long getItemId(int position){
         return position;
     }
+
+    public class GetView extends AsyncTask<Integer, Void, Bitmap> {
+        View convertView;
+        public GetView(View convertView) {
+            this.convertView = convertView;
+        }
+        @Override
+        protected Bitmap doInBackground(Integer ...positions) {
+            /*
+            Bitmap bitmap = imageShow.get(positions[0]);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inSampleSize = 4;
+            Bitmap resized = Bitmap.createScaledBitmap(bitmap, 90, 100, true);
+            return resized;
+            */
+            return imageShow.get(positions[0]);
+        }
+        @Override
+            protected void onPostExecute(Bitmap resized){
+            ImageView imageView = (ImageView) convertView.findViewById(R.id.imageView);
+            imageView.setImageBitmap(resized);
+        }
+    }
+
 }
